@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pali Script Converter (Myanmar & Roman)</title>
+    <style>
+        body {
+            font-family: 'Thonburi', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f6f9;
+            color: #333;
+            max-width: 700px;
+            margin: 30px auto;
+            padding: 20px;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+        h2 {
+            text-align: center;
+            color: #1a252f;
+            margin-bottom: 20px;
+            font-size: 22px;
+        }
+        label {
+            font-weight: bold;
+            display: block;
+            margin-top: 15px;
+            margin-bottom: 5px;
+            color: #2c3e50;
+        }
+        textarea {
+            width: 100%;
+            height: 90px;
+            padding: 10px;
+            border: 1px solid #cccccc;
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+            resize: vertical;
+        }
+        .output-myanmar {
+            font-family: 'Myanmar Sangam MN', 'Zawgyi-One', 'Masterpiece Myanmar Unicode', sans-serif;
+            font-size: 20px;
+        }
+        .output-roman {
+            font-family: 'Arial', sans-serif;
+            font-size: 18px;
+        }
+        .btn-convert {
+            width: 100%;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 15px;
+            margin-bottom: 10px;
+            transition: background-color 0.2s;
+        }
+        .btn-convert:hover {
+            background-color: #2980b9;
+        }
+        .btn-copy {
+            background-color: #2c3e50;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            font-size: 13px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 5px;
+            transition: background-color 0.2s;
+        }
+        .btn-copy:hover {
+            background-color: #34495e;
+        }
+        #status {
+            text-align: center;
+            color: #27ae60;
+            font-weight: bold;
+            height: 20px;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>โปรแกรมแปลงบาลีอักษรไทยเป็น อักษรพม่า และ Roman</h2>
+
+    <label for="inputThai">ข้อความบาลีอักษรไทย:</label>
+    <textarea id="inputThai" placeholder="พิมพ์หรือวางบาลีอักษรไทยที่นี่...">พุทฺธํ สรณํ คจฺฉามิ</textarea>
+
+    <button class="btn-convert" onclick="convertPali()">แปลงภาษา ↓</button>
+
+    <label for="outputMyanmar">อักษรพม่า (Pali Myanmar):</label>
+    <textarea id="outputMyanmar" class="output-myanmar" readonly></textarea>
+    <button class="btn-copy" onclick="copyText('outputMyanmar', 'Pali Myanmar')">📋 คัดลอก Pali Myanmar</button>
+
+    <label for="outputRoman">อักษรโรมัน (Pali Roman / IAST):</label>
+    <textarea id="outputRoman" class="output-roman" readonly></textarea>
+    <button class="btn-copy" onclick="copyText('outputRoman', 'Pali Roman')">📋 คัดลอก Pali Roman</button>
+
+    <div id="status"></div>
+</div>
+
+<script>
+// ---------------------------------------------------------
+// 1. ฟังก์ชันแปลงอักษรบาลีไทย -> พม่า
+// ---------------------------------------------------------
+function thaiToBurmesePali(text) {
+    // สลับตำแหน่ง สระ เ-, โ- ให้ครอบคลุมกลุ่มพยัญชนะสังโยคทั้งหมด
+    text = text.replace(/([เโ])([ก-ฮ](?:ฺ[ก-ฮ])*)/g, '$2$1');
+
+    const mapping = {
+        'ก': 'က', 'ข': 'ခ', 'ค': 'ဂ', 'ฆ': 'ဃ', 'ง': 'င',
+        'จ': 'စ', 'ฉ': 'ဆ', 'ช': 'ဇ', 'ฌ': 'ဈ', 'ญ': 'ဉ', 
+        'ฏ': 'ဋ', 'ฐ': 'ဌ', 'ฑ': 'ဍ', 'ฒ': 'ဎ', 'ณ': 'ဏ',
+        'ต': 'တ', 'ถ': 'ထ', 'ท': 'ဒ', 'ธ': 'ဓ', 'น': 'န',
+        'ป': 'ပ', 'ผ': 'ဖ', 'พ': 'ဗ', 'ภ': 'ဘ', 'ม': 'မ',
+        'ย': 'ယ', 'ร': 'ရ', 'ล': 'လ', 'ว': 'ဝ', 'ส': 'သ',
+        'ห': 'ဟ', 'ฬ': 'ဠ', 'อ': 'အ',
+        'า': 'ာ', 'ิ': 'ိ', 'ี': 'ီ', 'ุ': 'ု', 'ู': 'ူ',
+        'เ': 'ေ', 'โ': 'ော', 'ํ': 'ံ', 'ฺ': '္'
+    };
+
+    let result = "";
+    for (let char of text) {
+        result += mapping[char] || char;
+    }
+
+    // ปรับสระอาหางยาว (ါ) ให้รองรับกรณีที่ถูกคั่นด้วยสระ เ- (เช่น โข -> ခေါ)
+    result = result.replace(/([ခဂငဒပဝ])(ေ?)ာ/g, '$1$2ါ');
+    return result;
+}
+
+// ---------------------------------------------------------
+// 2. ฟังก์ชันแปลงอักษรบาลีไทย -> โรมัน (IAST)
+// ---------------------------------------------------------
+function thaiToRomanPali(text) {
+    const consonants = {
+        'ก': 'ka',  'ข': 'kha', 'ค': 'ga',  'ฆ': 'gha', 'ง': 'ṅa',
+        'จ': 'ca',  'ฉ': 'cha', 'ช': 'ja',  'ฌ': 'jha', 'ญ': 'ña',
+        'ฏ': 'ṭa',  'ฐ': 'ṭha', 'ฑ': 'ḍa',  'ฒ': 'ḍha', 'ณ': 'ṇa',
+        'ต': 'ta',  'ถ': 'tha', 'ท': 'da',  'ธ': 'dha', 'น': 'na',
+        'ป': 'pa',  'ผ': 'pha', 'พ': 'ba',  'ภ': 'bha', 'ม': 'ma',
+        'ย': 'ya',  'ร': 'ra',  'ล': 'la',  'ว': 'va',  'ส': 'sa',
+        'ห': 'ha',  'ฬ': 'ḷa',  'อ': 'a'
+    };
+
+    const vowels = {'า': 'ā', 'ิ': 'i', 'ี': 'ī', 'ุ': 'u', 'ู': 'ū', 'เ': 'e', 'โ': 'o'};
+    const misc = {'า': 'ā', 'ิ': 'i', 'ี': 'ī', 'ุ': 'u', 'ู': 'ū', 'เ': 'e', 'โ': 'o', 'ํ': 'ṃ', 'ฺ': ''};
+
+    // สลับตำแหน่ง สระ เ-, โ-
+    text = text.replace(/([เโ])([ก-ฮ])/g, '$2$1');
+
+    let res = [];
+    let i = 0;
+    let n = text.length;
+
+    while (i < n) {
+        let char = text[i];
+
+        if (consonants[char]) {
+            let base = consonants[char];
+
+            if (i + 1 < n) {
+                let nextChar = text[i + 1];
+                if (nextChar === 'ฺ') {
+                    res.push(base.slice(0, -1)); // ตัดสระ a ออก
+                    i += 2;
+                    continue;
+                } else if (vowels[nextChar]) {
+                    res.push(base.slice(0, -1) + vowels[nextChar]);
+                    i += 2;
+                    continue;
+                } else if (nextChar === 'ํ') {
+                    res.push(base + 'ṃ');
+                    i += 2;
+                    continue;
+                }
+            }
+            res.push(base);
+            i += 1;
+        } else {
+            res.push(misc[char] !== undefined ? misc[char] : char);
+            i += 1;
+        }
+    }
+
+    let out = res.join('');
+    // ปรับคำขึ้นต้นด้วย อ ให้เป็นสระล้วน เช่น 'aā' -> 'ā'
+    out = out.replace(/\ba([āiīuūeo])/g, '$1');
+    return out;
+}
+
+// ---------------------------------------------------------
+// 3. ฟังก์ชันการทำงานหน้าเว็บ
+// ---------------------------------------------------------
+function convertPali() {
+    const input = document.getElementById('inputThai').value.trim();
+    
+    document.getElementById('outputMyanmar').value = thaiToBurmesePali(input);
+    document.getElementById('outputRoman').value = thaiToRomanPali(input);
+    document.getElementById('status').innerText = "";
+}
+
+function copyText(elementId, label) {
+    const text = document.getElementById(elementId).value;
+    if (text) {
+        navigator.clipboard.writeText(text).then(() => {
+            document.getElementById('status').innerText = `✓ คัดลอก ${label} เรียบร้อยแล้ว!`;
+        });
+    }
+}
+
+// แปลงผลลัพธ์เริ่มต้นเมื่อเปิดหน้าเว็บ
+window.onload = convertPali;
+</script>
+
+</body>
+</html>
