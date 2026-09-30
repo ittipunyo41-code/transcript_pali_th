@@ -1,596 +1,630 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="th" class="h-full">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Offline Pali Converter</title>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#2c3e50">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pali Transliteration PWA</title>
+    
+    <!-- PWA Primary Color Theme -->
+    <meta name="theme-color" content="#4f46e5">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Pali Convert">
 
-<style>
-body {
-    font-family: "Segoe UI", Tahoma, sans-serif;
-    padding: 20px;
-    max-width: 900px;
-    margin: auto;
-    background: #f7f9fc;
-    color: #333;
-}
+    <!-- Tailwind CSS for UI styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        pali: {
+                            50: '#f5f3ff',
+                            100: '#ede9fe',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Google Fonts & Font Awesome Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-.container {
-    background: white;
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 4px 15px #0001;
-}
-
-h2 {
-    text-align: center;
-    color: #2c3e50;
-    margin-bottom: 5px;
-}
-
-textarea {
-    width: 100%;
-    height: 120px;
-    font-size: 22px;
-    padding: 15px;
-    margin-bottom: 15px;
-    border: 1px solid #ccd1d9;
-    border-radius: 7px;
-    box-sizing: border-box;
-    resize: vertical;
-    line-height: 1.6;
-}
-
-.buttons-grid,
-.action-btns {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    justify-content: center;
-    margin-bottom: 20px;
-}
-
-.btn {
-    padding: 12px 22px;
-    cursor: pointer;
-    border: 1px solid #d1d8e0;
-    background: #f1f2f6;
-    border-radius: 7px;
-    font-size: 16px;
-    font-weight: bold;
-}
-
-.btn:hover {
-    background: #3498db;
-    color: white;
-}
-
-.action {
-    padding: 10px 30px;
-    border: 0;
-    border-radius: 7px;
-    color: white;
-    background: #2ecc71;
-    font-size: 16px;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-.reset {
-    background: #e74c3c;
-}
-
-.info {
-    text-align: center;
-    color: #718096;
-    font-size: 14px;
-    margin-bottom: 15px;
-}
-
-.install-bar {
-    display: none;
-    background: #2c3e50;
-    color: white;
-    padding: 10px;
-    border-radius: 7px;
-    text-align: center;
-    margin-bottom: 15px;
-}
-
-.install-btn {
-    background: #f39c12;
-    color: white;
-    border: none;
-    padding: 5px 15px;
-    border-radius: 5px;
-    font-weight: bold;
-    cursor: pointer;
-    margin-left: 10px;
-}
-</style>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        /* Smooth transition for theme toggle */
+        body, div, textarea, button {
+            transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+        }
+    </style>
 </head>
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-full flex flex-col justify-between">
 
-<body>
+    <!-- Header -->
+    <header class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-20 shadow-sm">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-bold text-xl shadow-md">
+                    𑀧
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold leading-tight">Pali Script Converter</h1>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">ไทย ↔ Roman (IAST) ↔ မြန်မာ</p>
+                </div>
+            </div>
 
-<div class="container">
+            <!-- Header Right Action Controls -->
+            <div class="flex items-center space-x-2">
+                <!-- Network Badge -->
+                <span id="statusBadge" class="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300">
+                    <span class="w-2 h-2 mr-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    Ready Offline
+                </span>
 
-<h2>Offline Pali Converter</h2>
+                <!-- Theme Toggle Button -->
+                <button id="themeToggle" class="p-2.5 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 focus:outline-none" title="Toggle Theme">
+                    <i class="fa-solid fa-moon text-lg dark:hidden"></i>
+                    <i class="fa-solid fa-sun text-lg hidden dark:block text-amber-400"></i>
+                </button>
 
-<div class="info">
-    ไทย ↔ Roman (IAST) ↔ မြန်မာ
-    — ทำงานแบบ Offline
-</div>
+                <!-- Install PWA Button -->
+                <button id="installPwaBtn" class="hidden bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold py-2 px-3 rounded-lg shadow transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-download"></i>
+                    <span>Install App</span>
+                </button>
+            </div>
+        </div>
+    </header>
 
-<div id="installBar" class="install-bar">
-    ติดตั้งแอปนี้เพื่อใช้งานแบบ Offline บนหน้าจอหลัก
-    <button id="installBtn" class="install-btn">ติดตั้งแอป</button>
-</div>
+    <!-- Main Content Container -->
+    <main class="max-w-4xl mx-auto px-4 py-6 flex-grow w-full space-y-6">
 
-<p><b>1) พิมพ์บาลีต้นฉบับ</b></p>
+        <!-- Input Box Section -->
+        <section class="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-slate-200 dark:border-slate-700">
+            <div class="flex justify-between items-center mb-3">
+                <label for="inputText" class="font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-2">
+                    <i class="fa-solid fa-pen-to-square text-indigo-500"></i>
+                    1. พิมพ์ / วางบาลีต้นฉบับ
+                </label>
+                <span id="inputCharCount" class="text-xs text-slate-400">0 ตัวอักษร</span>
+            </div>
 
-<textarea
-    id="inputText"
-    placeholder="เช่น โอฏฺฐ, อิติ, นโม ตสฺส หรือ ဩဋ္ဌ"></textarea>
+            <textarea
+                id="inputText"
+                class="w-full h-32 p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none text-lg resize-y placeholder-slate-400 dark:placeholder-slate-500 font-sans"
+                placeholder="เช่น โอฏฺฐ, อิติ, นโม ตสฺส หรือ ဩဋ္ဌ..."
+                oninput="updateCharCount()"></textarea>
 
-<p><b>2) เลือกอักษรปลายทาง</b></p>
+            <!-- Quick Presets -->
+            <div class="mt-3 flex flex-wrap gap-2 items-center text-xs text-slate-500 dark:text-slate-400">
+                <span>ตัวอย่างคำ:</span>
+                <button onclick="setSample('นโม ตสฺส ภควโต อรหโต สมฺมาสมฺพุทฺธสฺส')" class="px-2.5 py-1 bg-slate-100 dark:bg-slate-700 hover:bg-indigo-50 dark:hover:bg-slate-600 hover:text-indigo-600 rounded-md transition">นโม ตสฺส</button>
+                <button onclick="setSample('อิติปิ โส ภควา อรหํ สมฺมาสมฺพุทฺโธ')" class="px-2.5 py-1 bg-slate-100 dark:bg-slate-700 hover:bg-indigo-50 dark:hover:bg-slate-600 hover:text-indigo-600 rounded-md transition">อิติปิ โส</button>
+                <button onclick="setSample('ဩဋ္ဌ')" class="px-2.5 py-1 bg-slate-100 dark:bg-slate-700 hover:bg-indigo-50 dark:hover:bg-slate-600 hover:text-indigo-600 rounded-md transition">ဩဋ္ဌ (Burmese)</button>
+            </div>
+        </section>
 
-<div class="buttons-grid">
+        <!-- Script Target Selection Buttons -->
+        <section class="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-slate-200 dark:border-slate-700 text-center">
+            <h2 class="font-semibold text-slate-700 dark:text-slate-200 mb-4 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-language text-indigo-500"></i>
+                2. เลือกอักษรปลายทางที่ต้องการแปลง
+            </h2>
 
-    <button class="btn" onclick="convertText('thai')">
-        🇹🇭 ไทย
-    </button>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <button onclick="convertText('thai')" class="py-3 px-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-indigo-500 dark:hover:border-indigo-500 bg-slate-50 dark:bg-slate-900/50 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 text-slate-700 dark:text-slate-200 font-medium flex items-center justify-center gap-2 transition group shadow-sm">
+                    <span class="text-xl">🇹🇭</span>
+                    <span>ภาษาไทย (Thai)</span>
+                </button>
 
-    <button class="btn" onclick="convertText('roman')">
-        🔤 Roman (IAST)
-    </button>
+                <button onclick="convertText('roman')" class="py-3 px-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-indigo-500 dark:hover:border-indigo-500 bg-slate-50 dark:bg-slate-900/50 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 text-slate-700 dark:text-slate-200 font-medium flex items-center justify-center gap-2 transition group shadow-sm">
+                    <span class="text-xl">🔤</span>
+                    <span>Roman (IAST)</span>
+                </button>
 
-    <button class="btn" onclick="convertText('burmese')">
-        🇲🇲 မြန်မာ
-    </button>
+                <button onclick="convertText('burmese')" class="py-3 px-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-indigo-500 dark:hover:border-indigo-500 bg-slate-50 dark:bg-slate-900/50 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 text-slate-700 dark:text-slate-200 font-medium flex items-center justify-center gap-2 transition group shadow-sm">
+                    <span class="text-xl">🇲🇲</span>
+                    <span>မြန်မာ (Burmese)</span>
+                </button>
+            </div>
+        </section>
 
-</div>
+        <!-- Output Result Section -->
+        <section class="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-slate-200 dark:border-slate-700">
+            <div class="flex justify-between items-center mb-3">
+                <label for="outputText" class="font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-2">
+                    <i class="fa-solid fa-square-check text-emerald-500"></i>
+                    3. ผลลัพธ์
+                </label>
+                <span id="detectedScript" class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-300">
+                    รอการแปลง
+                </span>
+            </div>
 
-<p><b>ผลลัพธ์</b></p>
+            <textarea
+                id="outputText"
+                readonly
+                class="w-full h-32 p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-900/80 text-slate-800 dark:text-slate-100 font-sans text-lg outline-none resize-y placeholder-slate-400"
+                placeholder="ผลลัพธ์จะปรากฏที่นี่..."></textarea>
 
-<textarea
-    id="outputText"
-    readonly
-    placeholder="ผลลัพธ์..."></textarea>
+            <!-- Output Actions -->
+            <div class="mt-4 flex flex-wrap justify-between items-center gap-3">
+                <div class="flex gap-2">
+                    <button onclick="speakText()" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-semibold text-sm transition flex items-center gap-2">
+                        <i class="fa-solid fa-volume-high text-indigo-500"></i>
+                        <span>อ่านเสียง</span>
+                    </button>
+                </div>
 
-<div class="action-btns">
+                <div class="flex gap-2 w-full sm:w-auto">
+                    <button onclick="resetText()" class="flex-1 sm:flex-initial px-5 py-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-950/30 dark:hover:bg-rose-900/50 dark:text-rose-400 font-semibold text-sm transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-rotate-left"></i>
+                        <span>รีเซ็ต</span>
+                    </button>
 
-    <button class="action" onclick="copyText()">
-        Copy
-    </button>
+                    <button onclick="copyText()" class="flex-1 sm:flex-initial px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm shadow-md transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-copy"></i>
+                        <span>คัดลอก (Copy)</span>
+                    </button>
+                </div>
+            </div>
+        </section>
 
-    <button class="action reset" onclick="resetText()">
-        Reset
-    </button>
+        <!-- PWA Instructions Banner -->
+        <section class="bg-indigo-50 dark:bg-slate-800/60 rounded-2xl p-5 border border-indigo-100 dark:border-slate-700">
+            <h3 class="font-bold text-indigo-900 dark:text-indigo-300 text-sm flex items-center gap-2 mb-2">
+                <i class="fa-solid fa-mobile-screen"></i>
+                วิธีติดตั้งแอปพลิเคชันสำหรับใช้งาน Offline
+            </h3>
+            <ul class="text-xs text-slate-600 dark:text-slate-400 space-y-1 list-disc pl-5">
+                <li><b>iOS (Safari):</b> กดปุ่ม Share (แชร์) ➔ เลือก <b>"Add to Home Screen" (เพิ่มไปยังหน้าจอโฮม)</b></li>
+                <li><b>Android (Chrome):</b> กดเมนูจุด 3 จุด (⋮) ด้านขวาบน ➔ เลือก <b>"Install app" หรือ "Add to Home Screen"</b></li>
+                <li><b>Desktop (Chrome/Edge):</b> กดปุ่ม <b>"Install App"</b> ที่มุมขวาบนของหน้าเว็บ</li>
+            </ul>
+        </section>
 
-</div>
+    </main>
 
-</div>
+    <!-- Footer -->
+    <footer class="bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 py-4 text-center text-xs text-slate-500 dark:text-slate-400">
+        <p>Offline Pali Converter PWA • ทำงานโดยสมบูรณ์โดยไม่ต้องใช้อินเทอร์เน็ต</p>
+    </footer>
 
-<script>
-/* =====================================================
-   PALI SCRIPT DATABASE
-===================================================== */
+    <!-- Notification Toast Container -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-slate-900 text-white dark:bg-white dark:text-slate-900 px-4 py-3 rounded-xl shadow-xl flex items-center gap-3 transition-opacity opacity-0 pointer-events-none duration-300 z-50">
+        <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400 dark:text-emerald-600"></i>
+        <span id="toastMsg" class="text-sm font-medium">คัดลอกเรียบร้อยแล้ว</span>
+    </div>
 
-const S = {
-
-    thai: {
-
-        C: {
-            ก:'k', ข:'kh', ค:'g', ฆ:'gh', ง:'ṅ',
-            จ:'c', ฉ:'ch', ช:'j', ฌ:'jh', ญ:'ñ',
-            ฏ:'ṭ', ฐ:'ṭh', ฑ:'ḍ', ฒ:'ḍh', ณ:'ṇ',
-            ต:'t', ถ:'th', ท:'d', ธ:'dh', น:'n',
-            ป:'p', ผ:'ph', พ:'b', ภ:'bh', ม:'m',
-            ย:'y', ร:'r', ล:'l', ว:'v',
-            ส:'s', ห:'h', ฬ:'ḷ'
+    <script>
+    /* =====================================================
+       PALI SCRIPT DATABASE
+    ===================================================== */
+    const S = {
+        thai: {
+            C: {
+                ก:'k', ข:'kh', ค:'g', ฆ:'gh', ง:'ṅ',
+                จ:'c', ฉ:'ch', ช:'j', ฌ:'jh', ญ:'ñ',
+                ฏ:'ṭ', ฐ:'ṭh', ฑ:'ḍ', ฒ:'ḍh', ณ:'ṇ',
+                ต:'t', ถ:'th', ท:'d', ธ:'dh', น:'n',
+                ป:'p', ผ:'ph', พ:'b', ภ:'bh', ม:'m',
+                ย:'y', ร:'r', ล:'l', ว:'v',
+                ส:'s', ห:'h', ฬ:'ḷ'
+            },
+            V: {
+                'า':'ā', 'ิ':'i', 'ี':'ī', 'ุ':'u', 'ู':'ū', 'เ':'e', 'โ':'o'
+            },
+            I: {
+                'อา':'ā', 'อิ':'i', 'อี':'ī', 'อุ':'u', 'อู':'ū', 'เอ':'e', 'โอ':'o', 'อ':'a'
+            },
+            N: 'ํ',
+            VIR: 'ฺ',
+            pre: true
         },
+        burmese: {
+            C: {
+                က:'k', ခ:'kh', ဂ:'g', ဃ:'gh', င:'ṅ',
+                စ:'c', ဆ:'ch', ဇ:'j', ဈ:'jh', ဉ:'ñ', ည:'ññ',
+                ဋ:'ṭ', ဌ:'ṭh', ဍ:'ḍ', ဎ:'ḍh', ဏ:'ṇ',
+                တ:'t', ထ:'th', ဒ:'d', ဓ:'dh', န:'n',
+                ပ:'p', ဖ:'ph', ဗ:'b', ဘ:'bh', မ:'m',
+                ယ:'y', ရ:'r', လ:'l', ဝ:'v',
+                သ:'s', ဟ:'h', ဠ:'ḷ'
+            },
+            V: {
+                'ာ':'ā', 'ိ':'i', 'ီ':'ī', 'ု':'u', 'ူ':'ū', 'ေ':'e', 'ော':'o'
+            },
+            I: {
+                'အာ':'ā', 'ဣ':'i', 'ဤ':'ī', 'ဥ':'u', 'ဦ':'ū', 'ဧ':'e', 'ဩ':'o', 'အ':'a'
+            },
+            N: 'ံ',
+            VIR: '္',
+            pre: false
+        }
+    };
 
-        V: {
-            'า':'ā',
-            'ิ':'i',
-            'ี':'ī',
-            'ุ':'u',
-            'ู':'ū',
-            'เ':'e',
-            'โ':'o'
-        },
+    const CROM = [
+        'kh','gh','ch','jh',
+        'ṭh','ḍh','th','dh','ph','bh',
+        'ññ','ñ','ṅ',
+        'ṭ','ḍ','ṇ','ḷ',
+        'k','g','c','j','t','d','n',
+        'p','b','m','y','r','l','v','s','h'
+    ];
 
-        I: {
-            'อา':'ā',
-            'อิ':'i',
-            'อี':'ī',
-            'อุ':'u',
-            'อู':'ū',
-            'เอ':'e',
-            'โอ':'o',
-            'อ':'a'
-        },
+    const VROM = ['ā','ī','ū','a','i','u','e','o'];
 
-        N: 'ํ',
-        VIR: 'ฺ',
-        pre: true
-    },
-
-
-    burmese: {
-
-        C: {
-            က:'k', ခ:'kh', ဂ:'g', ဃ:'gh', င:'ṅ',
-            စ:'c', ဆ:'ch', ဇ:'j', ဈ:'jh', ဉ:'ñ',
-            ည:'ññ',
-            ဋ:'ṭ', ဌ:'ṭh', ဍ:'ḍ', ဎ:'ḍh', ဏ:'ṇ',
-            တ:'t', ထ:'th', ဒ:'d', ဓ:'dh', န:'n',
-            ပ:'p', ဖ:'ph', ဗ:'b', ဘ:'bh', မ:'m',
-            ယ:'y', ရ:'r', လ:'l', ဝ:'v',
-            သ:'s', ဟ:'h', ဠ:'ḷ'
-        },
-
-        V: {
-            'ာ':'ā',
-            'ိ':'i',
-            'ီ':'ī',
-            'ု':'u',
-            'ူ':'ū',
-            'ေ':'e',
-            'ော':'o'
-        },
-
-        I: {
-            'အာ':'ā',
-            'ဣ':'i',
-            'ဤ':'ī',
-            'ဥ':'u',
-            'ဦ':'ū',
-            'ဧ':'e',
-            'ဩ':'o',
-            'အ':'a'
-        },
-
-        N: 'ံ',
-        VIR: '္',
-        pre: false
+    /* =====================================================
+       CORE DETECT & TRANSLITERATE LOGIC
+    ===================================================== */
+    function detect(text) {
+        if (/[\u0E00-\u0E7F]/.test(text)) return 'thai';
+        if (/[\u1000-\u109F]/.test(text)) return 'burmese';
+        return 'roman';
     }
 
-};
+    function romanize(text, src) {
+        if (src === 'roman') {
+            return text.replace(/ṁ/g, 'ṃ').normalize('NFC');
+        }
 
+        const m = S[src];
 
-/* =====================================================
-   ROMAN TOKEN TABLE
-===================================================== */
+        if (src === 'burmese') {
+            text = text.replace(/ါ/g, 'ာ').replace(/ဿ/g, 'သ္သ');
+        }
 
-const CROM = [
-    'kh','gh','ch','jh',
-    'ṭh','ḍh','th','dh','ph','bh',
-    'ññ','ñ','ṅ',
-    'ṭ','ḍ','ṇ','ḷ',
-    'k','g','c','j','t','d','n',
-    'p','b','m','y','r','l','v','s','h'
-];
+        /* Independent vowels */
+        for (const k of Object.keys(m.I).sort((a,b) => b.length - a.length)) {
+            text = text.split(k).join(m.I[k]);
+        }
 
-const VROM = [
-    'ā','ī','ū',
-    'a','i','u','e','o'
-];
+        /* Thai preposed vowels */
+        if (src === 'thai') {
+            const keys = Object.keys(m.C).join('');
+            const re = new RegExp('([เโ])([' + keys + '])', 'g');
+            text = text.replace(re, '$2$1');
+        }
 
+        let out = '';
+        const chars = [...text];
 
-/* =====================================================
-   DETECT SCRIPT
-===================================================== */
+        for (let i = 0; i < chars.length; i++) {
+            const ch = chars[i];
 
-function detect(text) {
+            if (m.C[ch]) {
+                out += m.C[ch];
+                const next = chars[i + 1];
 
-    if (/[\u0E00-\u0E7F]/.test(text)) {
-        return 'thai';
+                if (next === m.VIR || (next && m.V[next])) {
+                    continue;
+                }
+                out += 'a';
+            } else if (m.V[ch]) {
+                out += m.V[ch];
+            } else if (ch === m.N) {
+                out += 'ṃ';
+            } else if (ch === m.VIR) {
+                /* skip virama */
+            } else {
+                out += ch;
+            }
+        }
+
+        return out;
     }
 
-    if (/[\u1000-\u109F]/.test(text)) {
-        return 'burmese';
-    }
+    function tokenize(text) {
+        text = text.replace(/ṁ/g,'ṃ').normalize('NFC');
+        const tokens = [];
+        let i = 0;
 
-    return 'roman';
-}
+        while (i < text.length) {
+            const two = text.slice(i, i + 2);
 
-
-/* =====================================================
-   SCRIPT → ROMAN
-===================================================== */
-
-function romanize(text, src) {
-
-    if (src === 'roman') {
-        return text
-            .replace(/ṁ/g, 'ṃ')
-            .normalize('NFC');
-    }
-
-    const m = S[src];
-
-    if (src === 'burmese') {
-        text = text.replace(/ါ/g, 'ာ');
-        text = text.replace(/ဿ/g, 'သ္သ');
-    }
-
-    for (
-        const k of Object.keys(m.I)
-            .sort((a,b) => b.length - a.length)
-    ) {
-        text = text.split(k).join(m.I[k]);
-    }
-
-    if (src === 'thai') {
-        const keys = Object.keys(m.C).join('');
-        const re =
-            new RegExp(
-                '([เโ])([' + keys + '])',
-                'g'
-            );
-        text = text.replace(re, '$2$1');
-    }
-
-    let out = '';
-    const chars = [...text];
-
-    for (let i = 0; i < chars.length; i++) {
-        const ch = chars[i];
-
-        if (m.C[ch]) {
-            out += m.C[ch];
-            const next = chars[i + 1];
-
-            if (next === m.VIR) {
+            if (CROM.includes(two)) {
+                tokens.push({ type:'C', val:two });
+                i += 2;
                 continue;
             }
 
-            if (next && m.V[next]) {
-                continue;
+            const ch = text[i];
+            if (CROM.includes(ch)) {
+                tokens.push({ type:'C', val:ch });
+            } else if (VROM.includes(ch)) {
+                tokens.push({ type:'V', val:ch });
+            } else if (ch === 'ṃ') {
+                tokens.push({ type:'N', val:ch });
+            } else {
+                tokens.push({ type:'O', val:ch });
             }
-
-            out += 'a';
+            i++;
         }
-        else if (m.V[ch]) {
-            out += m.V[ch];
-        }
-        else if (ch === m.N) {
-            out += 'ṃ';
-        }
-        else if (ch === m.VIR) {
-            /* do nothing */
-        }
-        else {
-            out += ch;
-        }
+        return tokens;
     }
 
-    return out;
-}
+    function fromRoman(text, dst) {
+        if (dst === 'roman') return text;
 
+        const m = S[dst];
+        const rc = {};
+        for (const k in m.C) rc[m.C[k]] = k;
 
-/* =====================================================
-   ROMAN TOKENIZER
-===================================================== */
+        const rv = {};
+        for (const k in m.V) rv[m.V[k]] = k;
 
-function tokenize(text) {
+        const ri = {};
+        for (const k in m.I) ri[m.I[k]] = k;
 
-    text = text
-        .replace(/ṁ/g,'ṃ')
-        .normalize('NFC');
+        const tokens = tokenize(text);
+        let out = '';
 
-    const tokens = [];
-    let i = 0;
+        for (let i = 0; i < tokens.length; i++) {
+            const { type, val } = tokens[i];
 
-    while (i < text.length) {
-        const two = text.slice(i, i + 2);
+            if (type === 'C') {
+                const c = rc[val] || val;
+                const next = tokens[i + 1];
 
-        if (CROM.includes(two)) {
-            tokens.push({
-                type:'C',
-                val:two
-            });
-            i += 2;
-            continue;
-        }
-
-        const ch = text[i];
-
-        if (CROM.includes(ch)) {
-            tokens.push({
-                type:'C',
-                val:ch
-            });
-        }
-        else if (VROM.includes(ch)) {
-            tokens.push({
-                type:'V',
-                val:ch
-            });
-        }
-        else if (ch === 'ṃ') {
-            tokens.push({
-                type:'N',
-                val:ch
-            });
-        }
-        else {
-            tokens.push({
-                type:'O',
-                val:ch
-            });
-        }
-
-        i++;
-    }
-
-    return tokens;
-}
-
-
-/* =====================================================
-   ROMAN → SCRIPT
-===================================================== */
-
-function fromRoman(text, dst) {
-
-    if (dst === 'roman') {
-        return text;
-    }
-
-    const m = S[dst];
-
-    const rc = {};
-    for (const k in m.C) {
-        rc[m.C[k]] = k;
-    }
-
-    const rv = {};
-    for (const k in m.V) {
-        rv[m.V[k]] = k;
-    }
-
-    const ri = {};
-    for (const k in m.I) {
-        ri[m.I[k]] = k;
-    }
-
-    const tokens = tokenize(text);
-    let out = '';
-
-    for (let i = 0; i < tokens.length; i++) {
-        const [type, val] = [
-            tokens[i].type,
-            tokens[i].val
-        ];
-
-        if (type === 'C') {
-            const c = rc[val] || val;
-            const next = tokens[i + 1];
-
-            if (next && next.type === 'V') {
-                const v = next.val;
-
-                if (
-                    dst === 'thai' &&
-                    (v === 'e' || v === 'o')
-                ) {
-                    out += rv[v] + c;
+                if (next && next.type === 'V') {
+                    const v = next.val;
+                    if (dst === 'thai' && (v === 'e' || v === 'o')) {
+                        out += rv[v] + c;
+                    } else {
+                        out += c + (rv[v] || '');
+                    }
+                    i++;
+                } else if (next && next.type === 'C') {
+                    out += c + m.VIR;
+                } else {
+                    out += c;
                 }
-                else {
-                    out += c + (rv[v] || '');
-                }
-                i++;
-            }
-            else if (
-                next &&
-                next.type === 'C'
-            ) {
-                out += c + m.VIR;
-            }
-            else {
-                out += c;
+            } else if (type === 'V') {
+                out += ri[val] || val;
+            } else if (type === 'N') {
+                out += m.N;
+            } else {
+                out += val;
             }
         }
-        else if (type === 'V') {
-            out += ri[val] || val;
+
+        if (dst === 'burmese') {
+            out = out.replace(/သ္သ/g, 'ဿ').replace(/([ခဂငဒဓပဝ])ာ/g, '$1ါ');
         }
-        else if (type === 'N') {
-            out += m.N;
+
+        return out;
+    }
+
+    function convertText(destination) {
+        const input = document.getElementById('inputText').value;
+
+        if (!input.trim()) {
+            showToast('กรุณากรอกข้อความก่อนแปลงภาษา', 'fa-triangle-exclamation');
+            return;
         }
-        else {
-            out += val;
+
+        const source = detect(input);
+        const roman = romanize(input, source);
+        const result = fromRoman(roman, destination);
+
+        document.getElementById('outputText').value = result;
+
+        // Update script indicator tag
+        const scriptNames = { thai: 'ไทย', roman: 'Roman (IAST)', burmese: 'မြန်မာ' };
+        document.getElementById('detectedScript').innerText = 
+            `จาก: ${scriptNames[source]} ➔ เป็น: ${scriptNames[destination]}`;
+    }
+
+    /* =====================================================
+       UI UTILITIES & INTERACTION LOGIC
+    ===================================================== */
+    function updateCharCount() {
+        const text = document.getElementById('inputText').value;
+        document.getElementById('inputCharCount').innerText = `${text.length} ตัวอักษร`;
+    }
+
+    function setSample(str) {
+        document.getElementById('inputText').value = str;
+        updateCharCount();
+        showToast('โหลดตัวอย่างข้อความแล้ว');
+    }
+
+    async function copyText() {
+        const output = document.getElementById('outputText');
+        if (!output.value) {
+            showToast('ไม่มีข้อความให้คัดลอก', 'fa-circle-exclamation');
+            return;
+        }
+
+        try {
+            if (navigator.clipboard && window.isSecureContext) {
+                await navigator.clipboard.writeText(output.value);
+            } else {
+                output.select();
+                document.execCommand('copy');
+            }
+            showToast('คัดลอกเรียบร้อยแล้ว!');
+        } catch (e) {
+            output.select();
+            document.execCommand('copy');
+            showToast('คัดลอกเรียบร้อยแล้ว!');
         }
     }
 
-    if (dst === 'burmese') {
-        out = out.replace(/သ္သ/g, 'ဿ');
-        out = out.replace(/([ခဂငဒဓပဝ])ာ/g, '$1ါ');
+    function resetText() {
+        document.getElementById('inputText').value = '';
+        document.getElementById('outputText').value = '';
+        document.getElementById('detectedScript').innerText = 'รอการแปลง';
+        updateCharCount();
+        showToast('ล้างข้อความเรียบร้อย');
     }
 
-    return out;
-}
+    function showToast(msg, icon = 'fa-circle-check') {
+        const toast = document.getElementById('toast');
+        const toastMsg = document.getElementById('toastMsg');
+        const toastIcon = document.getElementById('toastIcon');
 
+        toastMsg.innerText = msg;
+        toastIcon.className = `fa-solid ${icon} text-emerald-400 dark:text-emerald-600`;
 
-/* =====================================================
-   CONVERT
-===================================================== */
+        toast.classList.remove('opacity-0', 'pointer-events-none');
+        toast.classList.add('opacity-100');
 
-function convertText(destination) {
-    const input = document.getElementById('inputText').value;
-
-    if (!input.trim()) {
-        return;
+        setTimeout(() => {
+            toast.classList.remove('opacity-100');
+            toast.classList.add('opacity-0', 'pointer-events-none');
+        }, 2200);
     }
 
-    const source = detect(input);
-    const roman = romanize(input, source);
-    const result = fromRoman(roman, destination);
+    function speakText() {
+        const text = document.getElementById('outputText').value || document.getElementById('inputText').value;
+        if (!text) {
+            showToast('ไม่มีข้อความสำหรับอ่านเสียง', 'fa-circle-exclamation');
+            return;
+        }
 
-    document.getElementById('outputText').value = result;
-}
-
-
-/* =====================================================
-   COPY & RESET
-===================================================== */
-
-async function copyText() {
-    const output = document.getElementById('outputText');
-
-    if (!output.value) {
-        return;
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = 0.85; // slightly slower for standard Pali chanting/clarity
+            window.speechSynthesis.speak(utterance);
+            showToast('กำลังเล่นเสียงอ่าน...', 'fa-volume-high');
+        } else {
+            showToast('เบราว์เซอร์ไม่รองรับการอ่านเสียง', 'fa-circle-xmark');
+        }
     }
 
-    try {
-        await navigator.clipboard.writeText(output.value);
-    } catch (e) {
-        output.select();
-        document.execCommand('copy');
-    }
-}
-
-function resetText() {
-    document.getElementById('inputText').value = '';
-    document.getElementById('outputText').value = '';
-}
-
-
-/* =====================================================
-   SERVICE WORKER & PWA INSTALL
-===================================================== */
-
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js')
-            .then(reg => console.log('SW Registered:', reg.scope))
-            .catch(err => console.error('SW Registration failed:', err));
+    /* Dark Mode Toggle Handler */
+    const themeToggleBtn = document.getElementById('themeToggle');
+    themeToggleBtn.addEventListener('click', () => {
+        document.documentElement.classList.toggle('dark');
+        const isDark = document.documentElement.classList.contains('dark');
+        localStorage.setItem('pali_theme', isDark ? 'dark' : 'light');
     });
-}
 
-let deferredPrompt;
-const installBar = document.getElementById('installBar');
-const installBtn = document.getElementById('installBtn');
-
-window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-    installBar.style.display = 'block';
-});
-
-installBtn.addEventListener('click', async () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') {
-        installBar.style.display = 'none';
+    if (localStorage.getItem('pali_theme') === 'dark' || 
+        (!localStorage.getItem('pali_theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
     }
-    deferredPrompt = null;
-});
-</script>
 
+    /* =====================================================
+       PWA MANIFEST & SERVICE WORKER BLOB REGISTRATION
+    ===================================================== */
+    // 1. Generate Manifest Dynamic Data-URI / Blob Link
+    const manifestJson = {
+        name: "Pali Script Converter",
+        short_name: "PaliConvert",
+        description: "Offline Pali Script Transliteration Application (Thai, Roman IAST, Burmese)",
+        start_url: "./",
+        display: "standalone",
+        background_color: "#1e293b",
+        theme_color: "#4f46e5",
+        icons: [
+            {
+                src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%234f46e5'/><text x='50' y='65' font-size='50' text-anchor='middle' fill='white' font-family='sans-serif'>𑀧</text></svg>",
+                sizes: "192x192 512x512",
+                type: "image/svg+xml"
+            }
+        ]
+    };
+
+    const manifestBlob = new Blob([JSON.stringify(manifestJson)], { type: 'application/json' });
+    const manifestUrl = URL.createObjectURL(manifestBlob);
+    const manifestLink = document.createElement('link');
+    manifestLink.rel = 'manifest';
+    manifestLink.href = manifestUrl;
+    document.head.appendChild(manifestLink);
+
+    // 2. Inline Service Worker Code Registration
+    if ('serviceWorker' in navigator) {
+        const swCode = `
+            const CACHE_NAME = 'pali-converter-v1';
+            const ASSETS = [
+                './',
+                'https://cdn.tailwindcss.com',
+                'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap',
+                'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css'
+            ];
+
+            self.addEventListener('install', (e) => {
+                e.waitUntil(
+                    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
+                );
+                self.skipWaiting();
+            });
+
+            self.addEventListener('activate', (e) => {
+                e.waitUntil(
+                    caches.keys().then((keys) => {
+                        return Promise.all(
+                            keys.map((key) => {
+                                if (key !== CACHE_NAME) return caches.delete(key);
+                            })
+                        );
+                    })
+                );
+                self.clients.claim();
+            });
+
+            self.addEventListener('fetch', (e) => {
+                e.respondWith(
+                    caches.match(e.request).then((res) => res || fetch(e.request).catch(() => caches.match('./')))
+                );
+            });
+        `;
+
+        const swBlob = new Blob([swCode], { type: 'application/javascript' });
+        const swUrl = URL.createObjectURL(swBlob);
+
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register(swUrl)
+                .then(() => console.log('PWA Service Worker Active'))
+                .catch(err => console.log('SW registration error:', err));
+        });
+    }
+
+    /* PWA Prompt Handler & Button logic */
+    let deferredPrompt;
+    const installBtn = document.getElementById('installPwaBtn');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        installBtn.classList.remove('hidden');
+    });
+
+    installBtn.addEventListener('click', async () => {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+            installBtn.classList.add('hidden');
+        }
+        deferredPrompt = null;
+    });
+
+    // Check Network connection status
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+
+    function updateOnlineStatus() {
+        const badge = document.getElementById('statusBadge');
+        if (navigator.onLine) {
+            badge.innerHTML = `<span class="w-2 h-2 mr-1.5 rounded-full bg-emerald-500 animate-pulse"></span>Ready Offline`;
+            badge.className = "hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300";
+        } else {
+            badge.innerHTML = `<span class="w-2 h-2 mr-1.5 rounded-full bg-amber-500"></span>Offline Mode`;
+            badge.className = "hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300";
+        }
+    }
+    </script>
 </body>
 </html>
