@@ -1,4 +1,5 @@
-const CACHE_NAME = 'pali-converter-v4';
+const CACHE_PREFIX = 'pali-converter-';
+const CACHE_NAME = `${CACHE_PREFIX}v5`;
 
 const ASSETS = [
   '/',
@@ -10,49 +11,65 @@ const ASSETS = [
 
 // Install: เก็บแคชทีละไฟล์อย่างปลอดภัย
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(async (cache) => {
-      for (const asset of ASSETS) {
-        try {
-          await cache.add(asset);
-        } catch (err) {
-          console.warn('[SW] Caching failed for:', asset, err);
-        }
+  event.waitUntil((async () => {
+    const cache = await caches.open(CACHE_NAME);
+    for (const asset of ASSETS) {
+      try {
+        await cache.add(asset);
+      } catch (error) {
+        console.warn('[SW] Caching failed for:', asset, error);
       }
-    })
-  );
-  self.skipWaiting();
+    }
+
+    if (!await cache.match('/') && !await cache.match('/index.html')) {
+      throw new Error('[SW] Unable to cache the app shell');
+    }
+    await self.skipWaiting();
+  })());
 });
 
 // Activate: ลบแคชเวอร์ชันเก่า
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
-        keys.map((key) => {
-          if (key !== CACHE_NAME) return caches.delete(key);
-        })
-      );
-    })
+    caches.keys().then((keys) => Promise.all(
+      keys
+        .filter((key) => key.startsWith(CACHE_PREFIX) && key !== CACHE_NAME)
+        .map((key) => caches.delete(key))
+    ))
   );
   self.clients.claim();
 });
 
 // Fetch: ใช้ Cache-First สำหรับการดึงข้อมูล/Refresh หน้าเว็บ
 self.addEventListener('fetch', (event) => {
-  if (!event.request.url.startsWith('http')) return;
+  const requestUrl = new URL(event.request.url);
+  if (event.request.method !== 'GET' || requestUrl.origin !== self.location.origin) return;
 
-  event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-      return fetch(event.request).catch(() => {
-        // หากเน็ตดับแล้วมีการรีเฟรชหรือเปลี่ยนหน้า ให้ดึงหน้าหลักมาแสดง
-        if (event.request.mode === 'navigate') {
-          return caches.match('/') || caches.match('/index.html');
+  event.respondWith((async () => {
+    const cache = await caches.open(CACHE_NAME);
+    const cachedResponse = await cache.match(event.request);
+    if (cachedResponse) return cachedResponse;
+
+    try {
+      const response = await fetch(event.request);
+      if (response.ok && response.type !== 'opaque') {
+        try {
+          await cache.put(event.request, response.clone());
+        } catch (error) {
+          console.warn('[SW] Runtime caching failed for:', event.request.url, error);
         }
+      }
+      return response;
+    } catch (error) {
+      if (event.request.mode === 'navigate') {
+        const appShell = await cache.match('/') || await cache.match('/index.html');
+        if (appShell) return appShell;
+      }
+      return new Response('Offline: this resource is not cached.', {
+        status: 503,
+        statusText: 'Service Unavailable',
+        headers: { 'Content-Type': 'text/plain; charset=utf-8' }
       });
-    })
-  );
+    }
+  })());
 });
