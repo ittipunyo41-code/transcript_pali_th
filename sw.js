@@ -1,12 +1,14 @@
-const CACHE_NAME = 'pali-converter-v3';
+const CACHE_NAME = 'pali-converter-v4';
 
 const ASSETS = [
-  './',
-  './index.html',
-  './manifest.json'
+  '/',
+  '/index.html',
+  '/manifest.json',
+  '/icon-192.png',
+  '/icon-512.png'
 ];
 
-// บันทึกไฟล์ทีละไฟล์ ถ้าไฟล์ไหนหาไม่เจอจะไม่ทำให้ไฟล์อื่นพัง
+// Install: เก็บแคชทีละไฟล์อย่างปลอดภัย
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(async (cache) => {
@@ -14,7 +16,7 @@ self.addEventListener('install', (event) => {
         try {
           await cache.add(asset);
         } catch (err) {
-          console.warn('[SW] Failed to cache asset:', asset, err);
+          console.warn('[SW] Caching failed for:', asset, err);
         }
       }
     })
@@ -22,6 +24,7 @@ self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
+// Activate: ลบแคชเวอร์ชันเก่า
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
@@ -35,7 +38,7 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// กลยุทธ์: ดึงจาก Cache ก่อนเสมอ (Cache-First) แม้รีเฟรชตอนไม่มีเน็ตก็ยังติด
+// Fetch: ใช้ Cache-First สำหรับการดึงข้อมูล/Refresh หน้าเว็บ
 self.addEventListener('fetch', (event) => {
   if (!event.request.url.startsWith('http')) return;
 
@@ -45,9 +48,9 @@ self.addEventListener('fetch', (event) => {
         return cachedResponse;
       }
       return fetch(event.request).catch(() => {
-        // หากเน็ตดับและเป็นการเปลี่ยนหน้า/รีเฟรช ให้คืนค่า index.html
+        // หากเน็ตดับแล้วมีการรีเฟรชหรือเปลี่ยนหน้า ให้ดึงหน้าหลักมาแสดง
         if (event.request.mode === 'navigate') {
-          return caches.match('./index.html') || caches.match('./');
+          return caches.match('/') || caches.match('/index.html');
         }
       });
     })
