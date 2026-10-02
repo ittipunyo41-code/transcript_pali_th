@@ -45,7 +45,7 @@
       margin: 0;
       color: var(--ink);
       background: radial-gradient(ellipse at 10% 0%, rgba(233, 166, 75, .10), transparent 34rem), var(--paper);
-      font-family: "Noto Sans Thai", "Myanmar Text", "Segoe UI", sans-serif;
+      font-family: "Noto Sans Thai", "Noto Sans Myanmar", "Padauk", "Myanmar Text", "Segoe UI", sans-serif;
       transition: background-color .2s ease, color .2s ease;
     }
     button, textarea { font: inherit; }
@@ -195,99 +195,165 @@
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
   <script>
-    const S = {
-      thai: {
-        C: { ก:'k', ข:'kh', ค:'g', ฆ:'gh', ง:'ṅ', จ:'c', ฉ:'ch', ช:'j', ฌ:'jh', ญ:'ñ', ฏ:'ṭ', ฐ:'ṭh', ฑ:'ḍ', ฒ:'ḍh', ณ:'ṇ', ต:'t', ถ:'th', ท:'d', ธ:'dh', น:'n', ป:'p', ผ:'ph', พ:'b', ภ:'bh', ม:'m', ย:'y', ร:'r', ล:'l', ว:'v', ส:'s', ห:'h', ฬ:'ḷ' },
-        V: { 'า':'ā', 'ิ':'i', 'ี':'ī', 'ุ':'u', 'ู':'ū', 'เ':'e', 'โ':'o' },
-        I: { 'อา':'ā', 'อิ':'i', 'อี':'ī', 'อุ':'u', 'อู':'ū', 'เอ':'e', 'โอ':'o', 'อ':'a' },
-        N: 'ํ', VIR: 'ฺ', pre: true
-      },
-      burmese: {
-        C: { က:'k', ခ:'kh', ဂ:'g', ဃ:'gh', င:'ṅ', စ:'c', ဆ:'ch', ဇ:'j', ဈ:'jh', ဉ:'ñ', ည:'ññ', ဋ:'ṭ', ဌ:'ṭh', ဍ:'ḍ', ဎ:'ḍh', ဏ:'ṇ', တ:'t', ထ:'th', ဒ:'d', ဓ:'dh', န:'n', ပ:'p', ဖ:'ph', ဗ:'b', ဘ:'bh', မ:'m', ယ:'y', ရ:'r', လ:'l', ဝ:'v', သ:'s', ဟ:'h', ဠ:'ḷ' },
-        V: { 'ာ':'ā', 'ိ':'i', 'ီ':'ī', 'ု':'u', 'ူ':'ū', 'ေ':'e', 'ော':'o' },
-        I: { 'အာ':'ā', 'ဣ':'i', 'ဤ':'ī', 'ဥ':'u', 'ဦ':'ū', 'ဧ':'e', 'ဩ':'o', 'အ':'a' },
-        N: 'ံ', VIR: '္', pre: false
-      }
-    };
-    const CROM = ['kh','gh','ch','jh','ṭh','ḍh','th','dh','ph','bh','ññ','ñ','ṅ','ṭ','ḍ','ṇ','ḷ','k','g','c','j','t','d','n','p','b','m','y','r','l','v','s','h'];
-    const VROM = ['ā','ī','ū','a','i','u','e','o'];
+    const TH_C={ก:'k',ข:'kh',ค:'g',ฆ:'gh',ง:'ṅ',จ:'c',ฉ:'ch',ช:'j',ฌ:'jh',ญ:'ñ',ฏ:'ṭ',ฐ:'ṭh',ฎ:'ḍ',ฑ:'ḍ',ฒ:'ḍh',ณ:'ṇ',ต:'t',ถ:'th',ท:'d',ธ:'dh',น:'n',ป:'p',ผ:'ph',พ:'b',ภ:'bh',ม:'m',ย:'y',ร:'r',ล:'l',ว:'v',ส:'s',ห:'h',ฬ:'ḷ'};
+    const MY_C={က:'k',ခ:'kh',ဂ:'g',ဃ:'gh',င:'ṅ',စ:'c',ဆ:'ch',ဇ:'j',ဈ:'jh',ဉ:'ñ',ဋ:'ṭ',ဌ:'ṭh',ဍ:'ḍ',ဎ:'ḍh',ဏ:'ṇ',တ:'t',ထ:'th',ဒ:'d',ဓ:'dh',န:'n',ပ:'p',ဖ:'ph',ဗ:'b',ဘ:'bh',မ:'m',ယ:'y',ရ:'r',လ:'l',ဝ:'v',သ:'s',ဟ:'h',ဠ:'ḷ'};
+    const R2TH={k:'ก',kh:'ข',g:'ค',gh:'ฆ',ṅ:'ง',c:'จ',ch:'ฉ',j:'ช',jh:'ฌ',ñ:'ญ',ṭ:'ฏ',ṭh:'ฐ',ḍ:'ฑ',ḍh:'ฒ',ṇ:'ณ',t:'ต',th:'ถ',d:'ท',dh:'ธ',n:'น',p:'ป',ph:'ผ',b:'พ',bh:'ภ',m:'ม',y:'ย',r:'ร',l:'ล',v:'ว',s:'ส',h:'ห',ḷ:'ฬ'};
+    const R2MY={k:'က',kh:'ခ',g:'ဂ',gh:'ဃ',ṅ:'င',c:'စ',ch:'ဆ',j:'ဇ',jh:'ဈ',ñ:'ဉ',ṭ:'ဋ',ṭh:'ဌ',ḍ:'ဍ',ḍh:'ဎ',ṇ:'ဏ',t:'တ',th:'ထ',d:'ဒ',dh:'ဓ',n:'န',p:'ပ',ph:'ဖ',b:'ဗ',bh:'ဘ',m:'မ',y:'ယ',r:'ရ',l:'လ',v:'ဝ',s:'သ',h:'ဟ',ḷ:'ဠ'};
+    const TH_VS={ā:'า',i:'ิ',ī:'ี',u:'ุ',ū:'ู'};
+    const TH_IV={a:'อ',ā:'อา',i:'อิ',ī:'อี',u:'อุ',ū:'อู',e:'เอ',o:'โอ'};
+    const MY_VS={ā:'ာ',i:'ိ',ī:'ီ',u:'ု',ū:'ူ',e:'ေ',o:'ော'};
+    const MY_IV={a:'အ',ā:'အာ',i:'ဣ',ī:'ဤ',u:'ဥ',ū:'ဦ',e:'ဧ',o:'ဩ'};
+    const TALL_AA='ခဂငဒပဝ'; // พยัญชนะพม่าที่ใช้ ါ (อา สูง)
 
-    function detect(text) {
-      if (/[\u0E00-\u0E7F]/.test(text)) return 'thai';
-      if (/[\u1000-\u109F]/.test(text)) return 'burmese';
-      return 'roman';
-    }
-    function romanize(text, src) {
-      if (src === 'roman') return text.replace(/ṁ/g, 'ṃ').normalize('NFC');
-      const m = S[src];
-      if (src === 'burmese') text = text.replace(/ါ/g, 'ာ').replace(/ဿ/g, 'သ္သ');
-      for (const k of Object.keys(m.I).sort((a, b) => b.length - a.length)) text = text.split(k).join(m.I[k]);
-      if (src === 'thai') {
-        const keys = Object.keys(m.C).join('');
-        text = text.replace(new RegExp('([เโ])([' + keys + '])', 'g'), '$2$1');
+    function thaiItems(run){
+      const t=[...run],items=[],n=t.length;let i=0;
+      const isC=c=>Object.prototype.hasOwnProperty.call(TH_C,c);
+      while(i<n){
+        const c=t[i];
+        if(c==='เ'||c==='โ'){
+          const v=c==='เ'?'e':'o';let j=i+1;
+          if(t[j]==='อ'){items.push({k:'IV',r:v});i=j+1;continue;}
+          if(isC(t[j])){items.push({k:'C',r:TH_C[t[j]]},{k:'V',r:v});i=j+1;continue;}
+          items.push({k:'O',r:c});i++;continue;
+        }
+        if(isC(c)){items.push({k:'C',r:TH_C[c]});i++;}
+        else if(c==='อ'){
+          const d=t[i+1],m={'า':'ā','ิ':'i','ี':'ī','ุ':'u','ู':'ū'};
+          if(m[d]){items.push({k:'IV',r:m[d]});i+=2;}
+          else if(d==='ึ'){items.push({k:'IV',r:'i'},{k:'M'});i+=2;}
+          else{items.push({k:'IV',r:'a'});i++;}
+        }
+        else if(c==='า'){items.push({k:'V',r:'ā'});i++;}
+        else if(c==='ิ'){items.push({k:'V',r:'i'});i++;}
+        else if(c==='ี'){items.push({k:'V',r:'ī'});i++;}
+        else if(c==='ึ'){items.push({k:'V',r:'i'},{k:'M'});i++;}
+        else if(c==='ื'){items.push({k:'V',r:'ī'},{k:'M'});i++;}
+        else if(c==='ุ'){items.push({k:'V',r:'u'});i++;}
+        else if(c==='ู'){items.push({k:'V',r:'ū'});i++;}
+        else if(c==='ํ'){items.push({k:'M'});i++;}
+        else if(c==='\u0E3A'){items.push({k:'VIR'});i++;}
+        else{items.push({k:'O',r:c});i++;}
       }
-      let out = '';
-      const chars = [...text];
-      for (let i = 0; i < chars.length; i++) {
-        const ch = chars[i];
-        if (m.C[ch]) {
-          out += m.C[ch];
-          const next = chars[i + 1];
-          if (next === m.VIR || (next && m.V[next])) continue;
-          out += 'a';
-        } else if (m.V[ch]) out += m.V[ch];
-        else if (ch === m.N) out += 'ṃ';
-        else if (ch !== m.VIR) out += ch;
+      return items;
+    }
+    function burmeseItems(run){
+      const t=[...run],items=[],n=t.length;let i=0;
+      const last=()=>items.length?items[items.length-1]:null;
+      const dep={'ာ':'ā','ါ':'ā','ိ':'i','ီ':'ī','ု':'u','ူ':'ū'};
+      const ind={'ဣ':'i','ဤ':'ī','ဥ':'u','ဦ':'ū','ဧ':'e','ဩ':'o','ဪ':'o'};
+      const aa=x=>x==='ာ'||x==='ါ';
+      while(i<n){
+        const c=t[i];
+        if(MY_C[c]){items.push({k:'C',r:MY_C[c]});i++;}
+        else if(c==='ဿ'){items.push({k:'C',r:'s'},{k:'VIR'},{k:'C',r:'s'});i++;}
+        else if(c==='ည'){items.push({k:'C',r:'ñ'},{k:'VIR'},{k:'C',r:'ñ'});i++;}
+        else if(c==='္'||c==='်'){if(!last()||last().k!=='VIR')items.push({k:'VIR'});i++;}
+        else if(dep[c]){items.push({k:'V',r:dep[c]});i++;}
+        else if(c==='ေ'){if(aa(t[i+1])){items.push({k:'V',r:'o'});i+=2;}else{items.push({k:'V',r:'e'});i++;}}
+        else if(c==='ံ'){items.push({k:'M'});i++;}
+        else if(c==='အ'){
+          const d=t[i+1];
+          if(aa(d)){items.push({k:'IV',r:'ā'});i+=2;}
+          else if(dep[d]){items.push({k:'IV',r:dep[d]});i+=2;}
+          else if(d==='ေ'){if(aa(t[i+2])){items.push({k:'IV',r:'o'});i+=3;}else{items.push({k:'IV',r:'e'});i+=2;}}
+          else{items.push({k:'IV',r:'a'});i++;}
+        }
+        else if(ind[c]){items.push({k:'IV',r:ind[c]});i++;}
+        else{items.push({k:'O',r:c});i++;}
+      }
+      return items;
+    }
+    function composeRoman(items){
+      let o='';
+      for(let i=0;i<items.length;i++){
+        const it=items[i];
+        if(it.k==='C'){
+          const nx=items[i+1];
+          if(nx&&nx.k==='VIR'){o+=it.r;i++;}
+          else if(nx&&nx.k==='V'){o+=it.r+nx.r;i++;}
+          else o+=it.r+'a';
+        }else if(it.k==='IV'||it.k==='V'||it.k==='O')o+=it.r;
+        else if(it.k==='M')o+='ṃ';
+      }
+      return o;
+    }
+    const ROM_RE=/(kh|gh|ch|jh|ṭh|ḍh|th|dh|ph|bh|[kgṅcjñṭḍṇtdnpbmyrlḷvsh])|([aāiīuūeo])|(ṃ)|([\s\S])/g;
+    function romanTokens(s){
+      const out=[];let m;ROM_RE.lastIndex=0;
+      while((m=ROM_RE.exec(s))){
+        if(m[1])out.push({k:'C',v:m[1]});else if(m[2])out.push({k:'V',v:m[2]});
+        else if(m[3])out.push({k:'M'});else out.push({k:'O',v:m[4]});
       }
       return out;
     }
-    function tokenize(text) {
-      text = text.replace(/ṁ/g, 'ṃ').normalize('NFC');
-      const tokens = [];
-      let i = 0;
-      while (i < text.length) {
-        const two = text.slice(i, i + 2);
-        if (CROM.includes(two)) { tokens.push({ type: 'C', val: two }); i += 2; continue; }
-        const ch = text[i];
-        if (CROM.includes(ch)) tokens.push({ type: 'C', val: ch });
-        else if (VROM.includes(ch)) tokens.push({ type: 'V', val: ch });
-        else if (ch === 'ṃ') tokens.push({ type: 'N', val: ch });
-        else tokens.push({ type: 'O', val: ch });
-        i++;
+    function renderRoman(s,dst){
+      const tk=romanTokens(s),n=tk.length;let out='',i=0;
+      const th=dst==='thai';
+      while(i<n){
+        const t=tk[i];
+        if(t.k==='C'){
+          let j=i;const cs=[];
+          while(j<n&&tk[j].k==='C'){cs.push(tk[j].v);j++;}
+          let v=null;if(j<n&&tk[j].k==='V'){v=tk[j].v;j++;}
+          let m=false;if(j<n&&tk[j].k==='M'){m=true;j++;}
+          let s2='';
+          if(th){
+            const pre=v==='e'?'เ':v==='o'?'โ':'';
+            cs.forEach((c,k)=>{
+              if(k===cs.length-1)s2+=pre;
+              s2+=R2TH[c];
+              if(k<cs.length-1||v===null)s2+='\u0E3A';
+            });
+            if(pre)s2+=(m?'ํ':'');
+            else if(v==='i'&&m)s2+='ึ';
+            else{if(v&&v!=='a')s2+=TH_VS[v];if(m)s2+='ํ';}
+          }else{
+            cs.forEach((c,k)=>{s2+=R2MY[c];if(k<cs.length-1)s2+='္';});
+            if(v===null)s2+='်';
+            else if(v!=='a'){
+              if(v==='o'&&TALL_AA.includes(cs[cs.length-1]&&R2MY[cs[cs.length-1]]))s2+='ေါ';
+              else if(v==='ā'&&TALL_AA.includes(R2MY[cs[cs.length-1]]))s2+='ါ';
+              else s2+=MY_VS[v];
+            }
+            if(m)s2+='ံ';
+          }
+          out+=s2;i=j;
+        }else if(t.k==='V'){
+          let m=false;if(i+1<n&&tk[i+1].k==='M'){m=true;}
+          if(th)out+=(m&&t.v==='i')?'อึ':TH_IV[t.v]+(m?'ํ':'');
+          else out+=MY_IV[t.v]+(m?'ံ':'');
+          i+=m?2:1;
+        }else if(t.k==='M'){out+=th?'ํ':'ံ';i++;}
+        else{out+=t.v;i++;}
       }
-      return tokens;
-    }
-    function fromRoman(text, dst) {
-      if (dst === 'roman') return text;
-      const m = S[dst], rc = {}, rv = {}, ri = {};
-      for (const k in m.C) rc[m.C[k]] = k;
-      for (const k in m.V) rv[m.V[k]] = k;
-      for (const k in m.I) ri[m.I[k]] = k;
-      const tokens = tokenize(text);
-      let out = '';
-      for (let i = 0; i < tokens.length; i++) {
-        const { type, val } = tokens[i];
-        if (type === 'C') {
-          const c = rc[val] || val, next = tokens[i + 1];
-          if (next && next.type === 'V') {
-            out += dst === 'thai' && (next.val === 'e' || next.val === 'o') ? (rv[next.val] + c) : (c + (rv[next.val] || ''));
-            i++;
-          } else if (next && next.type === 'C') out += c + m.VIR;
-          else out += c;
-        } else if (type === 'V') out += ri[val] || val;
-        else if (type === 'N') out += m.N;
-        else out += val;
-      }
-      if (dst === 'burmese') out = out.replace(/သ္သ/g, 'ဿ').replace(/([ခဂငဒဓပဝ])ာ/g, '$1ါ');
+      if(!th)out=out.replace(/ဉ္ဉ/g,'ည').replace(/သ္သ/g,'ဿ');
       return out;
     }
+    function normRoman(s){return s.normalize('NFC').replace(/ṁ/g,'ṃ').replace(/Ṁ/g,'Ṃ');}
+    const RUN_RE=/([\u0E00-\u0E7F]+)|([\u1000-\u109F]+)|([^\u0E00-\u0E7F\u1000-\u109F]+)/g;
+    function convertPali(text,dst){
+      const runs=text.match(RUN_RE)||[];let out='';
+      for(const run of runs){
+        const f=run.codePointAt(0);
+        const sc=(f>=0x0E00&&f<=0x0E7F)?'thai':(f>=0x1000&&f<=0x109F)?'burmese':'roman';
+        if(sc===dst){out+=run;continue;}
+        let rom=sc==='thai'?composeRoman(thaiItems(run)):sc==='burmese'?composeRoman(burmeseItems(run)):normRoman(run);
+        out+=dst==='roman'?rom:renderRoman(rom.toLowerCase(),dst);
+      }
+      return out;
+    }
+
     function convertText(destination) {
       const input = document.getElementById('inputText').value;
       if (!input.trim()) { showToast('กรุณากรอกข้อความก่อนแปลงภาษา'); return; }
-      const source = detect(input), result = fromRoman(romanize(input, source), destination);
+      const result = convertPali(input.normalize('NFC'), destination);
       document.getElementById('outputText').value = result;
       const names = { thai: 'ไทย', roman: 'Roman (IAST)', burmese: 'မြန်မာ' };
-      document.getElementById('detectedScript').textContent = `จาก: ${names[source]} → เป็น: ${names[destination]}`;
+      const found = [];
+      if (/[\u0E00-\u0E7F]/.test(input)) found.push(names.thai);
+      if (/[\u1000-\u109F]/.test(input)) found.push(names.burmese);
+      if (/[A-Za-zāīūṅñṭḍṇḷṃṁ]/i.test(input)) found.push(names.roman);
+      document.getElementById('detectedScript').textContent = `จาก: ${found.join(' + ')} → เป็น: ${names[destination]}`;
     }
     function updateCharCount() {
       document.getElementById('inputCharCount').textContent = `${document.getElementById('inputText').value.length} ตัวอักษร`;
