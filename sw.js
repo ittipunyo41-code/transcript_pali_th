@@ -1,75 +1,68 @@
-const CACHE_PREFIX = 'pali-converter-';
-const CACHE_NAME = `${CACHE_PREFIX}v5`;
+const CACHE_NAME = "pali-transcript-v1";
 
-const ASSETS = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png'
+const APP_SHELL = [
+  "./",
+  "./index.html",
+  "./manifest.json",
+  "./icon-192.png",
+  "./icon-512.png"
 ];
 
-// Install: เก็บแคชทีละไฟล์อย่างปลอดภัย
-self.addEventListener('install', (event) => {
-  event.waitUntil((async () => {
-    const cache = await caches.open(CACHE_NAME);
-    for (const asset of ASSETS) {
-      try {
-        await cache.add(asset);
-      } catch (error) {
-        console.warn('[SW] Caching failed for:', asset, error);
-      }
-    }
-
-    if (!await cache.match('/') && !await cache.match('/index.html')) {
-      throw new Error('[SW] Unable to cache the app shell');
-    }
-    await self.skipWaiting();
-  })());
-});
-
-// Activate: ลบแคชเวอร์ชันเก่า
-self.addEventListener('activate', (event) => {
+self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => Promise.all(
-      keys
-        .filter((key) => key.startsWith(CACHE_PREFIX) && key !== CACHE_NAME)
-        .map((key) => caches.delete(key))
-    ))
+    caches.open(CACHE_NAME)
+      .then((cache) => cache.addAll(APP_SHELL))
+      .then(() => self.skipWaiting())
   );
-  self.clients.claim();
 });
 
-// Fetch: ใช้ Cache-First สำหรับการดึงข้อมูล/Refresh หน้าเว็บ
-self.addEventListener('fetch', (event) => {
-  const requestUrl = new URL(event.request.url);
-  if (event.request.method !== 'GET' || requestUrl.origin !== self.location.origin) return;
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    caches.keys()
+      .then((cacheNames) => {
+        return Promise.all(
+          cacheNames
+            .filter((cacheName) => cacheName !== CACHE_NAME)
+            .map((cacheName) => caches.delete(cacheName))
+        );
+      })
+      .then(() => self.clients.claim())
+  );
+});
 
-  event.respondWith((async () => {
-    const cache = await caches.open(CACHE_NAME);
-    const cachedResponse = await cache.match(event.request);
-    if (cachedResponse) return cachedResponse;
+self.addEventListener("fetch", (event) => {
+  if (event.request.method !== "GET") return;
 
-    try {
-      const response = await fetch(event.request);
-      if (response.ok && response.type !== 'opaque') {
-        try {
-          await cache.put(event.request, response.clone());
-        } catch (error) {
-          console.warn('[SW] Runtime caching failed for:', event.request.url, error);
+  event.respondWith(
+    caches.match(event.request)
+      .then((cachedResponse) => {
+        if (cachedResponse) {
+          return cachedResponse;
         }
-      }
-      return response;
-    } catch (error) {
-      if (event.request.mode === 'navigate') {
-        const appShell = await cache.match('/') || await cache.match('/index.html');
-        if (appShell) return appShell;
-      }
-      return new Response('Offline: this resource is not cached.', {
-        status: 503,
-        statusText: 'Service Unavailable',
-        headers: { 'Content-Type': 'text/plain; charset=utf-8' }
-      });
-    }
-  })());
+
+        return fetch(event.request)
+          .then((networkResponse) => {
+            const responseCopy = networkResponse.clone();
+
+            if (new URL(event.request.url).origin === self.location.origin) {
+              caches.open(CACHE_NAME)
+                .then((cache) => cache.put(event.request, responseCopy));
+            }
+
+            return networkResponse;
+          })
+          .catch(() => {
+            if (event.request.mode === "navigate") {
+              return caches.match("./index.html");
+            }
+
+            return new Response("ไม่สามารถโหลดไฟล์ขณะออฟไลน์ได้", {
+              status: 503,
+              headers: {
+                "Content-Type": "text/plain; charset=utf-8"
+              }
+            });
+          });
+      })
+  );
 });
