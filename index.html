@@ -3,444 +3,1145 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#2c3e50">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="Pali Convert">
-  <meta name="description" content="แปลงอักษรบาลี ไทย Roman (IAST) และမြန်မာ ทำงานออฟไลน์ได้">
-  <link rel="manifest" href="/manifest.json">
-  <title>Offline Pali Converter</title>
+  <meta name="theme-color" content="#0f766e">
+  <title>เครื่องมือแปลงอักษรบาลี ไทย Roman พม่า</title>
   <style>
     :root {
-      color-scheme: light;
-      --ink: #243746;
-      --muted: #657681;
-      --paper: #f4f7f5;
-      --surface: #fff;
-      --line: #d8e2de;
-      --accent: #176b5b;
-      --accent-dark: #105245;
-      --accent-soft: #e5f2ed;
-      --highlight: #e9a64b;
-      --danger: #a84448;
-      --shadow: 0 12px 36px rgba(29, 55, 59, .07);
+      --bg: #f4f8f7;
+      --surface: #ffffff;
+      --surface-2: #eef7f5;
+      --text: #17302c;
+      --muted: #60706d;
+      --border: #cfe0dc;
+      --primary: #0f766e;
+      --primary-hover: #0b5e58;
+      --danger: #b42318;
+      --shadow: 0 12px 32px rgba(23, 48, 44, .10);
     }
-    :root.dark {
-      color-scheme: dark;
-      --ink: #eaf0ec;
-      --muted: #a8b7b2;
-      --paper: #142320;
-      --surface: #1c302b;
-      --line: #354b43;
-      --accent: #72c5a8;
-      --accent-dark: #8bd8ba;
-      --accent-soft: #263f36;
-      --highlight: #efbd6d;
-      --danger: #f09a99;
-      --shadow: 0 12px 36px rgba(0, 0, 0, .18);
+
+    [data-theme="dark"] {
+      --bg: #10211e;
+      --surface: #17302c;
+      --surface-2: #1d3d37;
+      --text: #e7f4f0;
+      --muted: #aec4bf;
+      --border: #3a5b54;
+      --primary: #2dd4bf;
+      --primary-hover: #5eead4;
+      --danger: #fda4af;
+      --shadow: 0 12px 32px rgba(0, 0, 0, .28);
     }
-    * { box-sizing: border-box; }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      min-height: 100vh;
       margin: 0;
-      color: var(--ink);
-      background: radial-gradient(ellipse at 10% 0%, rgba(233, 166, 75, .10), transparent 34rem), var(--paper);
-      font-family: "Noto Sans Thai", "Noto Sans Myanmar", "Padauk", "Myanmar Text", "Segoe UI", sans-serif;
-      transition: background-color .2s ease, color .2s ease;
+      min-width: 320px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Noto Sans Thai", "Noto Sans Myanmar", system-ui, sans-serif;
     }
-    button, textarea { font: inherit; }
-    button { color: inherit; cursor: pointer; }
+
+    button, textarea, select {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .container {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px 0 48px;
+    }
+
     .topbar {
-      position: sticky;
-      z-index: 2;
-      top: 0;
-      border-bottom: 1px solid var(--line);
-      background: color-mix(in srgb, var(--surface) 94%, transparent);
-      backdrop-filter: blur(12px);
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: flex-start;
+      margin-bottom: 24px;
     }
-    .topbar-inner, main, footer { width: min(900px, calc(100% - 32px)); margin-inline: auto; }
-    .topbar-inner { min-height: 76px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-    .identity { display: flex; align-items: center; gap: 12px; min-width: 0; }
-    .mark { width: 44px; height: 44px; display: grid; place-items: center; flex: 0 0 44px; border-radius: 13px; background: var(--accent); color: #fff; font-family: Georgia, serif; font-size: 27px; }
-    .identity h1 { margin: 0; font-size: 18px; line-height: 1.3; }
-    .identity p { margin: 3px 0 0; color: var(--muted); font-size: 12px; }
-    .tools { display: flex; align-items: center; gap: 8px; }
-    .status { display: inline-flex; align-items: center; gap: 7px; padding: 6px 10px; border-radius: 99px; background: var(--accent-soft); color: var(--accent-dark); font-size: 12px; white-space: nowrap; }
-    .status::before { width: 7px; height: 7px; border-radius: 50%; background: #25865e; content: ""; }
-    .status.offline::before { background: var(--highlight); }
-    .icon-button, .install-button, .sample-button, .action-button, .target-button {
-      border: 1px solid var(--line);
-      border-radius: 9px;
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.5rem, 3vw, 2.2rem);
+      line-height: 1.25;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      margin: 8px 0 0;
+      line-height: 1.6;
+    }
+
+    .icon-button,
+    .button {
+      border: 1px solid var(--border);
+      color: var(--text);
       background: var(--surface);
-      transition: border-color .16s ease, background-color .16s ease, transform .16s ease;
+      border-radius: 10px;
+      padding: 10px 14px;
+      transition: .18s ease;
     }
-    .icon-button { width: 40px; height: 40px; font-size: 18px; }
-    .icon-button:hover, .sample-button:hover, .target-button:hover { border-color: var(--accent); }
-    .install-button { padding: 9px 12px; border-color: var(--accent); background: var(--accent); color: #fff; font-size: 13px; font-weight: 700; }
-    .install-button:hover, .primary:hover { background: var(--accent-dark); }
-    [hidden] { display: none !important; }
-    main { padding-block: 28px 34px; display: grid; gap: 16px; }
-    .section { padding: 20px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); box-shadow: var(--shadow); }
-    .section-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
-    .section h2, .section label { margin: 0; font-size: 15px; font-weight: 700; }
-    .count, .detected { color: var(--muted); font-size: 12px; }
-    .detected { padding: 5px 9px; border-radius: 99px; background: var(--paper); }
-    textarea { width: 100%; min-height: 130px; padding: 13px 14px; resize: vertical; border: 1px solid var(--line); border-radius: 9px; outline: none; background: var(--paper); color: var(--ink); font-size: 17px; line-height: 1.65; }
-    textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent); }
-    textarea::placeholder { color: var(--muted); opacity: .78; }
-    .samples { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; margin-top: 12px; color: var(--muted); font-size: 12px; }
-    .sample-button { padding: 6px 9px; font-size: 12px; }
-    .target-section { text-align: center; }
-    .target-section h2 { margin-bottom: 14px; }
-    .target-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-    .target-button { min-height: 54px; padding: 10px; font-weight: 650; }
-    .target-button:hover { background: var(--accent-soft); }
-    .target-button span { margin-right: 7px; }
-    .actions { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
-    .action-group { display: flex; flex-wrap: wrap; gap: 8px; }
-    .action-button { min-height: 40px; padding: 8px 13px; font-size: 13px; font-weight: 650; }
-    .action-button:hover { border-color: var(--accent); }
-    .action-button.primary { border-color: var(--accent); background: var(--accent); color: #fff; }
-    .action-button.danger { color: var(--danger); }
-    .hint { border-left: 3px solid var(--highlight); padding: 13px 16px; background: color-mix(in srgb, var(--surface) 75%, var(--highlight) 5%); color: var(--muted); font-size: 12px; line-height: 1.7; }
-    .hint strong { color: var(--ink); }
-    footer { padding: 0 0 20px; color: var(--muted); text-align: center; font-size: 12px; }
-    .toast { position: fixed; right: 18px; bottom: 18px; z-index: 3; max-width: min(400px, calc(100vw - 36px)); padding: 12px 16px; border-radius: 9px; background: var(--ink); color: var(--surface); box-shadow: var(--shadow); opacity: 0; pointer-events: none; transform: translateY(8px); transition: opacity .2s, transform .2s; }
-    .toast.visible { opacity: 1; transform: translateY(0); }
-    @media (max-width: 600px) {
-      .topbar-inner, main, footer { width: min(100% - 22px, 900px); }
-      .topbar-inner { min-height: 68px; gap: 8px; }
-      .identity { gap: 8px; }
-      .mark { width: 38px; height: 38px; flex-basis: 38px; font-size: 23px; }
-      .identity h1 { font-size: 15px; }
-      .identity p { font-size: 11px; }
-      .status { display: none; }
-      .install-button { padding: 8px 9px; font-size: 12px; }
-      main { padding-top: 16px; }
-      .section { padding: 15px; }
-      .target-grid { grid-template-columns: 1fr; }
-      .target-button { min-height: 46px; }
-      .actions { align-items: stretch; }
-      .action-group { width: 100%; }
-      .action-group .action-button { flex: 1; }
+
+    .icon-button:hover,
+    .button:hover {
+      border-color: var(--primary);
+      transform: translateY(-1px);
+    }
+
+    .button.primary {
+      border-color: var(--primary);
+      color: #fff;
+      background: var(--primary);
+    }
+
+    [data-theme="dark"] .button.primary {
+      color: #062b27;
+    }
+
+    .button.primary:hover {
+      background: var(--primary-hover);
+    }
+
+    .button.danger {
+      color: var(--danger);
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: var(--shadow);
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 16px;
+      align-items: end;
+      margin-bottom: 18px;
+    }
+
+    .control-group {
+      display: grid;
+      gap: 7px;
+    }
+
+    label {
+      font-size: .9rem;
+      font-weight: 700;
+    }
+
+    select {
+      color: var(--text);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 11px 12px;
+    }
+
+    .conversion-buttons,
+    .actions,
+    .samples {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .conversion-buttons .button {
+      flex: 1;
+      min-width: 145px;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 18px;
+    }
+
+    .panel {
+      display: grid;
+      gap: 9px;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .counter,
+    .hint,
+    .status {
+      color: var(--muted);
+      font-size: .82rem;
+    }
+
+    textarea {
+      display: block;
+      width: 100%;
+      resize: vertical;
+      min-height: 320px;
+      padding: 15px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface-2);
+      color: var(--text);
+      font-family: "Noto Sans Thai", "Noto Sans Myanmar", "Noto Serif", serif;
+      font-size: 1.14rem;
+      line-height: 1.85;
+      outline: none;
+    }
+
+    textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent);
+    }
+
+    .output-wrap {
+      position: relative;
+    }
+
+    .output-wrap textarea {
+      background: var(--surface);
+    }
+
+    .swap-button {
+      align-self: center;
+      width: 42px;
+      height: 42px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--primary);
+      font-size: 1.25rem;
+      font-weight: 800;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 16px;
+      margin-top: 18px;
+    }
+
+    .info-box {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      background: var(--surface-2);
+    }
+
+    .info-box h2 {
+      margin: 0 0 10px;
+      font-size: 1rem;
+    }
+
+    .info-box ul {
+      margin: 0;
+      padding-left: 20px;
+      line-height: 1.75;
+      color: var(--muted);
+    }
+
+    .warning {
+      color: var(--danger);
+      white-space: pre-wrap;
+    }
+
+    .toast {
+      position: fixed;
+      z-index: 10;
+      left: 50%;
+      bottom: 28px;
+      transform: translate(-50%, 90px);
+      opacity: 0;
+      padding: 11px 16px;
+      border-radius: 10px;
+      color: #fff;
+      background: #17302c;
+      box-shadow: var(--shadow);
+      transition: .24s ease;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+
+    @media (max-width: 760px) {
+      .container {
+        width: min(100% - 22px, 1180px);
+        padding-top: 16px;
+      }
+
+      .topbar,
+      .toolbar {
+        grid-template-columns: 1fr;
+        display: grid;
+      }
+
+      .workspace,
+      .info-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .swap-button {
+        justify-self: center;
+        transform: rotate(90deg);
+      }
+
+      textarea {
+        min-height: 230px;
+      }
     }
   </style>
 </head>
 <body>
-  <header class="topbar">
-    <div class="topbar-inner">
-      <div class="identity">
-        <div class="mark" aria-hidden="true">𑀧</div>
-        <div>
-          <h1>Offline Pali Converter</h1>
-          <p>ไทย ↔ Roman (IAST) ↔ မြန်မာ</p>
-        </div>
+  <main class="container">
+    <header class="topbar">
+      <div>
+        <h1>เครื่องมือแปลงอักษรบาลี</h1>
+        <p class="subtitle">บาลีอักษรไทย · Roman IAST · บาลีพม่า Unicode</p>
       </div>
-      <div class="tools">
-        <span id="statusBadge" class="status">พร้อมใช้งานออฟไลน์</span>
-        <button id="themeToggle" class="icon-button" type="button" aria-label="เปลี่ยนธีม" title="เปลี่ยนธีม">◐</button>
-        <button id="installPwaBtn" class="install-button" type="button" hidden>↓ ติดตั้ง</button>
-      </div>
-    </div>
-  </header>
+      <button id="themeToggle" class="icon-button" type="button" aria-label="สลับธีม">โหมดมืด</button>
+    </header>
 
-  <main>
-    <section class="section">
-      <div class="section-head">
-        <label for="inputText">1. พิมพ์หรือวางบาลีต้นฉบับ</label>
-        <span id="inputCharCount" class="count">0 ตัวอักษร</span>
+    <section class="card">
+      <div class="toolbar">
+        <div class="control-group">
+          <label for="targetScript">แปลงผลลัพธ์เป็น</label>
+          <select id="targetScript">
+            <option value="thai">บาลีอักษรไทย</option>
+            <option value="roman">Roman IAST</option>
+            <option value="myanmar">บาลีพม่า</option>
+          </select>
+        </div>
+        <div class="status" id="detectedScript">ตรวจพบอินพุต: ยังไม่มีข้อความ</div>
       </div>
-      <textarea id="inputText" placeholder="เช่น โอฏฺฐ, อิติ, นโม ตสฺส หรือ ဩဋ္ဌ..." oninput="updateCharCount()"></textarea>
-      <div class="samples">
-        <span>ตัวอย่าง:</span>
-        <button class="sample-button" type="button" onclick="setSample('นโม ตสฺส ภควโต อรหโต สมฺมาสมฺพุทฺธสฺส')">นโม ตสฺส</button>
-        <button class="sample-button" type="button" onclick="setSample('อิติปิ โส ภควา อรหํ สมฺมาสมฺพุทฺโธ')">อิติปิ โส</button>
-        <button class="sample-button" type="button" onclick="setSample('ဩဋ္ဌ')">ဩဋ္ဌ</button>
+
+      <div class="conversion-buttons">
+        <button class="button primary" type="button" data-target="thai">แปลงเป็นบาลีไทย</button>
+        <button class="button primary" type="button" data-target="roman">แปลงเป็น Roman</button>
+        <button class="button primary" type="button" data-target="myanmar">แปลงเป็นบาลีพม่า</button>
+      </div>
+
+      <div class="workspace">
+        <section class="panel">
+          <div class="panel-header">
+            <label for="inputText">ข้อความต้นฉบับ</label>
+            <span id="inputCount" class="counter">0 ตัวอักษร</span>
+          </div>
+          <textarea id="inputText" spellcheck="false" placeholder="วางหรือพิมพ์ข้อความ เช่น พุทฺธํ สรณํ คจฺฉามิ, buddhaṃ saraṇaṃ gacchāmi หรือ ဗုဒ္ဓံ သရဏံ ဂစ္ဆာမိ"></textarea>
+          <div class="samples">
+            <button class="button" type="button" data-sample="พุทฺธํ สรณํ คจฺฉามิ">ตัวอย่างไทย</button>
+            <button class="button" type="button" data-sample="buddhaṃ saraṇaṃ gacchāmi">ตัวอย่าง Roman</button>
+            <button class="button" type="button" data-sample="ဗုဒ္ဓံ သရဏံ ဂစ္ဆာမိ">ตัวอย่างพม่า</button>
+          </div>
+        </section>
+
+        <button id="swapButton" class="swap-button" type="button" aria-label="สลับข้อความ">⇄</button>
+
+        <section class="panel">
+          <div class="panel-header">
+            <label for="outputText">ผลการแปลง</label>
+            <span id="outputCount" class="counter">0 ตัวอักษร</span>
+          </div>
+          <div class="output-wrap">
+            <textarea id="outputText" spellcheck="false" readonly placeholder="ผลลัพธ์จะแสดงที่นี่"></textarea>
+          </div>
+          <div class="actions">
+            <button id="copyButton" class="button" type="button">คัดลอกผลลัพธ์</button>
+            <button id="speakButton" class="button" type="button">อ่านออกเสียง Roman</button>
+            <button id="downloadButton" class="button" type="button">ดาวน์โหลด .txt</button>
+            <button id="clearButton" class="button danger" type="button">ล้างทั้งหมด</button>
+          </div>
+        </section>
+      </div>
+
+      <div class="info-grid">
+        <section class="info-box">
+          <h2>หลักการแปลง</h2>
+          <ul>
+            <li>ระบบแปลงข้อความเป็น token บาลีกลางก่อน แล้วจึง render ไปยังอักษรเป้าหมาย</li>
+            <li>พยัญชนะซ้อนถูกสร้างด้วย `ฺ` ในไทย และ `္` ในพม่า ไม่ใช้การแทนที่ข้อความแบบสุ่ม</li>
+            <li>สระ `a ā i ī u ū e o` และนิคหิต `ṃ` ได้รับการจัดการตามตำแหน่งของพยัญชนะ</li>
+          </ul>
+        </section>
+        <section class="info-box">
+          <h2>การตรวจสอบข้อความ</h2>
+          <div id="validationMessage" class="hint">ยังไม่มีข้อความให้ตรวจสอบ</div>
+        </section>
       </div>
     </section>
-
-    <section class="section target-section">
-      <h2>2. เลือกอักษรปลายทาง</h2>
-      <div class="target-grid">
-        <button class="target-button" type="button" onclick="convertText('thai')"><span aria-hidden="true">🇹🇭</span>ภาษาไทย</button>
-        <button class="target-button" type="button" onclick="convertText('roman')"><span aria-hidden="true">Aa</span>Roman (IAST)</button>
-        <button class="target-button" type="button" onclick="convertText('burmese')"><span aria-hidden="true">🇲🇲</span>မြန်မာ</button>
-      </div>
-    </section>
-
-    <section class="section">
-      <div class="section-head">
-        <label for="outputText">3. ผลลัพธ์</label>
-        <span id="detectedScript" class="detected">รอการแปลง</span>
-      </div>
-      <textarea id="outputText" readonly placeholder="ผลลัพธ์จะปรากฏที่นี่..."></textarea>
-      <div class="actions">
-        <div class="action-group">
-          <button class="action-button" type="button" onclick="speakText()">เสียงอ่าน</button>
-        </div>
-        <div class="action-group">
-          <button class="action-button danger" type="button" onclick="resetText()">ล้างข้อความ</button>
-          <button class="action-button primary" type="button" onclick="copyText()">คัดลอกผลลัพธ์</button>
-        </div>
-      </div>
-    </section>
-
-    <aside class="section hint">
-      <strong>ติดตั้งเพื่อใช้งานออฟไลน์</strong><br>
-      iOS: Safari → แชร์ → เพิ่มไปยังหน้าจอโฮม · Android: Chrome → เมนู → ติดตั้งแอป · Desktop: เลือกปุ่มติดตั้งด้านบน
-    </aside>
   </main>
 
-  <footer>Offline Pali Converter · แปลงข้อความได้โดยไม่ต้องใช้อินเทอร์เน็ต</footer>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
   <script>
-    const TH_C={ก:'k',ข:'kh',ค:'g',ฆ:'gh',ง:'ṅ',จ:'c',ฉ:'ch',ช:'j',ฌ:'jh',ญ:'ñ',ฏ:'ṭ',ฐ:'ṭh',ฎ:'ḍ',ฑ:'ḍ',ฒ:'ḍh',ณ:'ṇ',ต:'t',ถ:'th',ท:'d',ธ:'dh',น:'n',ป:'p',ผ:'ph',พ:'b',ภ:'bh',ม:'m',ย:'y',ร:'r',ล:'l',ว:'v',ส:'s',ห:'h',ฬ:'ḷ'};
-    const MY_C={က:'k',ခ:'kh',ဂ:'g',ဃ:'gh',င:'ṅ',စ:'c',ဆ:'ch',ဇ:'j',ဈ:'jh',ဉ:'ñ',ဋ:'ṭ',ဌ:'ṭh',ဍ:'ḍ',ဎ:'ḍh',ဏ:'ṇ',တ:'t',ထ:'th',ဒ:'d',ဓ:'dh',န:'n',ပ:'p',ဖ:'ph',ဗ:'b',ဘ:'bh',မ:'m',ယ:'y',ရ:'r',လ:'l',ဝ:'v',သ:'s',ဟ:'h',ဠ:'ḷ'};
-    const R2TH={k:'ก',kh:'ข',g:'ค',gh:'ฆ',ṅ:'ง',c:'จ',ch:'ฉ',j:'ช',jh:'ฌ',ñ:'ญ',ṭ:'ฏ',ṭh:'ฐ',ḍ:'ฑ',ḍh:'ฒ',ṇ:'ณ',t:'ต',th:'ถ',d:'ท',dh:'ธ',n:'น',p:'ป',ph:'ผ',b:'พ',bh:'ภ',m:'ม',y:'ย',r:'ร',l:'ล',v:'ว',s:'ส',h:'ห',ḷ:'ฬ'};
-    const R2MY={k:'က',kh:'ခ',g:'ဂ',gh:'ဃ',ṅ:'င',c:'စ',ch:'ဆ',j:'ဇ',jh:'ဈ',ñ:'ဉ',ṭ:'ဋ',ṭh:'ဌ',ḍ:'ဍ',ḍh:'ဎ',ṇ:'ဏ',t:'တ',th:'ထ',d:'ဒ',dh:'ဓ',n:'န',p:'ပ',ph:'ဖ',b:'ဗ',bh:'ဘ',m:'မ',y:'ယ',r:'ရ',l:'လ',v:'ဝ',s:'သ',h:'ဟ',ḷ:'ဠ'};
-    const TH_VS={ā:'า',i:'ิ',ī:'ี',u:'ุ',ū:'ู'};
-    const TH_IV={a:'อ',ā:'อา',i:'อิ',ī:'อี',u:'อุ',ū:'อู',e:'เอ',o:'โอ'};
-    const MY_VS={ā:'ာ',i:'ိ',ī:'ီ',u:'ု',ū:'ူ',e:'ေ',o:'ော'};
-    const MY_IV={a:'အ',ā:'အာ',i:'ဣ',ī:'ဤ',u:'ဥ',ū:'ဦ',e:'ဧ',o:'ဩ'};
-    const TALL_AA='ခဂငဒပဝ'; // พยัญชนะพม่าที่ใช้ ါ (อา สูง)
+    "use strict";
 
-    function thaiItems(run){
-      const t=[...run],items=[],n=t.length;let i=0;
-      const isC=c=>Object.prototype.hasOwnProperty.call(TH_C,c);
-      while(i<n){
-        const c=t[i];
-        if(c==='เ'||c==='โ'){
-          const v=c==='เ'?'e':'o';let j=i+1;
-          if(t[j]==='อ'){items.push({k:'IV',r:v});i=j+1;continue;}
-          if(isC(t[j])){items.push({k:'C',r:TH_C[t[j]]},{k:'V',r:v});i=j+1;continue;}
-          items.push({k:'O',r:c});i++;continue;
+    /*
+      Pali Transliterator
+      Internal tokens:
+      { type: "C", value: "k" }
+      { type: "V", value: "a" }
+      { type: "M", value: "ṃ" }
+      { type: "P", value: original punctuation/space }
+    */
+
+    const THAI_CONSONANTS = {
+      "ก": "k", "ข": "kh", "ค": "g", "ฆ": "gh", "ง": "ṅ",
+      "จ": "c", "ฉ": "ch", "ช": "j", "ฌ": "jh", "ญ": "ñ",
+      "ฏ": "ṭ", "ฐ": "ṭh", "ฑ": "ḍ", "ฒ": "ḍh", "ณ": "ṇ",
+      "ต": "t", "ถ": "th", "ท": "d", "ธ": "dh", "น": "n",
+      "ป": "p", "ผ": "ph", "พ": "b", "ภ": "bh", "ม": "m",
+      "ย": "y", "ร": "r", "ล": "l", "ว": "v", "ส": "s", "ห": "h",
+      "ฬ": "ḷ"
+    };
+
+    const MYANMAR_CONSONANTS = {
+      "က": "k", "ခ": "kh", "ဂ": "g", "ဃ": "gh", "င": "ṅ",
+      "စ": "c", "ဆ": "ch", "ဇ": "j", "ဈ": "jh", "ဉ": "ñ",
+      "ည": "ññ",
+      "ဋ": "ṭ", "ဌ": "ṭh", "ဍ": "ḍ", "ဎ": "ḍh", "ဏ": "ṇ",
+      "တ": "t", "ထ": "th", "ဒ": "d", "ဓ": "dh", "န": "n",
+      "ပ": "p", "ဖ": "ph", "ဗ": "b", "ဘ": "bh", "မ": "m",
+      "ယ": "y", "ရ": "r", "လ": "l", "ဝ": "v", "သ": "s", "ဟ": "h",
+      "ဠ": "ḷ"
+    };
+
+    const ROMAN_TO_THAI = {
+      "k": "ก", "kh": "ข", "g": "ค", "gh": "ฆ", "ṅ": "ง",
+      "c": "จ", "ch": "ฉ", "j": "ช", "jh": "ฌ", "ñ": "ญ",
+      "ṭ": "ฏ", "ṭh": "ฐ", "ḍ": "ฑ", "ḍh": "ฒ", "ṇ": "ณ",
+      "t": "ต", "th": "ถ", "d": "ท", "dh": "ธ", "n": "น",
+      "p": "ป", "ph": "ผ", "b": "พ", "bh": "ภ", "m": "ม",
+      "y": "ย", "r": "ร", "l": "ล", "v": "ว", "s": "ส", "h": "ห",
+      "ḷ": "ฬ"
+    };
+
+    const ROMAN_TO_MYANMAR = {
+      "k": "က", "kh": "ခ", "g": "ဂ", "gh": "ဃ", "ṅ": "င",
+      "c": "စ", "ch": "ဆ", "j": "ဇ", "jh": "ဈ", "ñ": "ဉ",
+      "ṭ": "ဋ", "ṭh": "ဌ", "ḍ": "ဍ", "ḍh": "ဎ", "ṇ": "ဏ",
+      "t": "တ", "th": "ထ", "d": "ဒ", "dh": "ဓ", "n": "န",
+      "p": "ပ", "ph": "ဖ", "b": "ဗ", "bh": "ဘ", "m": "မ",
+      "y": "ယ", "r": "ရ", "l": "လ", "v": "ဝ", "s": "သ", "ဟ": "h",
+      "h": "ဟ", "ḷ": "ဠ"
+    };
+
+    const THAI_VOWEL_AFTER = {
+      "ะ": "a",
+      "า": "ā",
+      "ิ": "i",
+      "ี": "ī",
+      "ุ": "u",
+      "ู": "ū"
+    };
+
+    const THAI_VOWEL_BEFORE = {
+      "เ": "e",
+      "โ": "o"
+    };
+
+    const MYANMAR_VOWEL_SIGNS = {
+      "ာ": "ā",
+      "ါ": "ā",
+      "ိ": "i",
+      "ီ": "ī",
+      "ု": "u",
+      "ူ": "ū",
+      "ေ": "e"
+    };
+
+    const ROMAN_CONSONANTS = [
+      "kh", "gh", "ch", "jh", "ṭh", "ḍh", "th", "dh", "ph", "bh",
+      "ṅ", "ñ", "ṭ", "ḍ", "ṇ", "ḷ",
+      "k", "g", "c", "j", "t", "d", "n", "p", "b", "m",
+      "y", "r", "l", "v", "s", "h"
+    ];
+
+    const ROMAN_VOWELS = ["ā", "ī", "ū", "a", "i", "u", "e", "o"];
+    const THAI_VIRAMA = "ฺ";
+    const MYANMAR_VIRAMA = "္";
+    const THAI_NIGGAHITA = "ํ";
+    const MYANMAR_NIGGAHITA = "ံ";
+
+    const inputText = document.getElementById("inputText");
+    const outputText = document.getElementById("outputText");
+    const targetScript = document.getElementById("targetScript");
+    const detectedScript = document.getElementById("detectedScript");
+    const validationMessage = document.getElementById("validationMessage");
+    const inputCount = document.getElementById("inputCount");
+    const outputCount = document.getElementById("outputCount");
+    const toast = document.getElementById("toast");
+
+    function token(type, value) {
+      return { type, value };
+    }
+
+    function isThai(char) {
+      return /[\u0E00-\u0E7F]/u.test(char);
+    }
+
+    function isMyanmar(char) {
+      return /[\u1000-\u109F\uAA60-\uAA7F]/u.test(char);
+    }
+
+    function isRoman(char) {
+      return /[A-Za-zĀĪŪṄÑṬḌṆḶṂāīūṅñṭḍṇḷṃ]/u.test(char);
+    }
+
+    function normalizeRoman(text) {
+      return text
+        .normalize("NFC")
+        .replace(/ṁ/gu, "ṃ")
+        .replace(/Ṁ/gu, "ṃ")
+        .replace(/Ṃ/gu, "ṃ")
+        .toLowerCase();
+    }
+
+    function getScriptOfChar(char) {
+      if (isThai(char)) return "thai";
+      if (isMyanmar(char)) return "myanmar";
+      if (isRoman(char)) return "roman";
+      return "other";
+    }
+
+    function detectScript(text) {
+      const counts = { thai: 0, myanmar: 0, roman: 0 };
+
+      for (const char of text) {
+        const script = getScriptOfChar(char);
+        if (script in counts) counts[script]++;
+      }
+
+      const found = Object.entries(counts)
+        .filter(([, count]) => count > 0)
+        .sort((a, b) => b[1] - a[1]);
+
+      if (!found.length) return { main: "none", counts };
+
+      return {
+        main: found[0][0],
+        mixed: found.length > 1,
+        counts
+      };
+    }
+
+    function parseThai(run) {
+      const result = [];
+      let i = 0;
+      let pendingPreVowel = null;
+
+      while (i < run.length) {
+        const char = run[i];
+
+        if (THAI_VOWEL_BEFORE[char]) {
+          pendingPreVowel = THAI_VOWEL_BEFORE[char];
+          i++;
+          continue;
         }
-        if(isC(c)){items.push({k:'C',r:TH_C[c]});i++;}
-        else if(c==='อ'){
-          const d=t[i+1],m={'า':'ā','ิ':'i','ี':'ī','ุ':'u','ู':'ū'};
-          if(m[d]){items.push({k:'IV',r:m[d]});i+=2;}
-          else if(d==='ึ'){items.push({k:'IV',r:'i'},{k:'M'});i+=2;}
-          else{items.push({k:'IV',r:'a'});i++;}
-        }
-        else if(c==='า'){items.push({k:'V',r:'ā'});i++;}
-        else if(c==='ิ'){items.push({k:'V',r:'i'});i++;}
-        else if(c==='ี'){items.push({k:'V',r:'ī'});i++;}
-        else if(c==='ึ'){items.push({k:'V',r:'i'},{k:'M'});i++;}
-        else if(c==='ื'){items.push({k:'V',r:'ī'},{k:'M'});i++;}
-        else if(c==='ุ'){items.push({k:'V',r:'u'});i++;}
-        else if(c==='ู'){items.push({k:'V',r:'ū'});i++;}
-        else if(c==='ํ'){items.push({k:'M'});i++;}
-        else if(c==='\u0E3A'){items.push({k:'VIR'});i++;}
-        else{items.push({k:'O',r:c});i++;}
-      }
-      return items;
-    }
-    function burmeseItems(run){
-      const t=[...run],items=[],n=t.length;let i=0;
-      const last=()=>items.length?items[items.length-1]:null;
-      const dep={'ာ':'ā','ါ':'ā','ိ':'i','ီ':'ī','ု':'u','ူ':'ū'};
-      const ind={'ဣ':'i','ဤ':'ī','ဥ':'u','ဦ':'ū','ဧ':'e','ဩ':'o','ဪ':'o'};
-      const aa=x=>x==='ာ'||x==='ါ';
-      while(i<n){
-        const c=t[i];
-        if(MY_C[c]){items.push({k:'C',r:MY_C[c]});i++;}
-        else if(c==='ဿ'){items.push({k:'C',r:'s'},{k:'VIR'},{k:'C',r:'s'});i++;}
-        else if(c==='ည'){items.push({k:'C',r:'ñ'},{k:'VIR'},{k:'C',r:'ñ'});i++;}
-        else if(c==='္'||c==='်'){if(!last()||last().k!=='VIR')items.push({k:'VIR'});i++;}
-        else if(dep[c]){items.push({k:'V',r:dep[c]});i++;}
-        else if(c==='ေ'){if(aa(t[i+1])){items.push({k:'V',r:'o'});i+=2;}else{items.push({k:'V',r:'e'});i++;}}
-        else if(c==='ံ'){items.push({k:'M'});i++;}
-        else if(c==='အ'){
-          const d=t[i+1];
-          if(aa(d)){items.push({k:'IV',r:'ā'});i+=2;}
-          else if(dep[d]){items.push({k:'IV',r:dep[d]});i+=2;}
-          else if(d==='ေ'){if(aa(t[i+2])){items.push({k:'IV',r:'o'});i+=3;}else{items.push({k:'IV',r:'e'});i+=2;}}
-          else{items.push({k:'IV',r:'a'});i++;}
-        }
-        else if(ind[c]){items.push({k:'IV',r:ind[c]});i++;}
-        else{items.push({k:'O',r:c});i++;}
-      }
-      return items;
-    }
-    function composeRoman(items){
-      let o='';
-      for(let i=0;i<items.length;i++){
-        const it=items[i];
-        if(it.k==='C'){
-          const nx=items[i+1];
-          if(nx&&nx.k==='VIR'){o+=it.r;i++;}
-          else if(nx&&nx.k==='V'){o+=it.r+nx.r;i++;}
-          else o+=it.r+'a';
-        }else if(it.k==='IV'||it.k==='V'||it.k==='O')o+=it.r;
-        else if(it.k==='M')o+='ṃ';
-      }
-      return o;
-    }
-    const ROM_RE=/(kh|gh|ch|jh|ṭh|ḍh|th|dh|ph|bh|[kgṅcjñṭḍṇtdnpbmyrlḷvsh])|([aāiīuūeo])|(ṃ)|([\s\S])/g;
-    function romanTokens(s){
-      const out=[];let m;ROM_RE.lastIndex=0;
-      while((m=ROM_RE.exec(s))){
-        if(m[1])out.push({k:'C',v:m[1]});else if(m[2])out.push({k:'V',v:m[2]});
-        else if(m[3])out.push({k:'M'});else out.push({k:'O',v:m[4]});
-      }
-      return out;
-    }
-    function renderRoman(s,dst){
-      const tk=romanTokens(s),n=tk.length;let out='',i=0;
-      const th=dst==='thai';
-      while(i<n){
-        const t=tk[i];
-        if(t.k==='C'){
-          let j=i;const cs=[];
-          while(j<n&&tk[j].k==='C'){cs.push(tk[j].v);j++;}
-          let v=null;if(j<n&&tk[j].k==='V'){v=tk[j].v;j++;}
-          let m=false;if(j<n&&tk[j].k==='M'){m=true;j++;}
-          let s2='';
-          if(th){
-            const pre=v==='e'?'เ':v==='o'?'โ':'';
-            cs.forEach((c,k)=>{
-              if(k===cs.length-1)s2+=pre;
-              s2+=R2TH[c];
-              if(k<cs.length-1||v===null)s2+='\u0E3A';
-            });
-            if(pre)s2+=(m?'ํ':'');
-            else if(v==='i'&&m)s2+='ึ';
-            else{if(v&&v!=='a')s2+=TH_VS[v];if(m)s2+='ํ';}
-          }else{
-            cs.forEach((c,k)=>{s2+=R2MY[c];if(k<cs.length-1)s2+='္';});
-            if(v===null)s2+='်';
-            else if(v!=='a'){
-              if(v==='o'&&TALL_AA.includes(cs[cs.length-1]&&R2MY[cs[cs.length-1]]))s2+='ေါ';
-              else if(v==='ā'&&TALL_AA.includes(R2MY[cs[cs.length-1]]))s2+='ါ';
-              else s2+=MY_VS[v];
-            }
-            if(m)s2+='ံ';
+
+        if (THAI_CONSONANTS[char]) {
+          result.push(token("C", THAI_CONSONANTS[char]));
+          i++;
+
+          if (run[i] === THAI_VIRAMA) {
+            i++;
+            continue;
           }
-          out+=s2;i=j;
-        }else if(t.k==='V'){
-          let m=false;if(i+1<n&&tk[i+1].k==='M'){m=true;}
-          if(th)out+=(m&&t.v==='i')?'อึ':TH_IV[t.v]+(m?'ํ':'');
-          else out+=MY_IV[t.v]+(m?'ံ':'');
-          i+=m?2:1;
-        }else if(t.k==='M'){out+=th?'ํ':'ံ';i++;}
-        else{out+=t.v;i++;}
+
+          if (pendingPreVowel) {
+            result.push(token("V", pendingPreVowel));
+            pendingPreVowel = null;
+          } else if (THAI_VOWEL_AFTER[run[i]]) {
+            result.push(token("V", THAI_VOWEL_AFTER[run[i]]));
+            i++;
+          } else {
+            result.push(token("V", "a"));
+          }
+
+          if (run[i] === THAI_NIGGAHITA || run[i] === "ํ") {
+            result.push(token("M", "ṃ"));
+            i++;
+          }
+
+          continue;
+        }
+
+        if (char === THAI_NIGGAHITA || char === "ํ") {
+          result.push(token("M", "ṃ"));
+          i++;
+          continue;
+        }
+
+        if (THAI_VOWEL_AFTER[char]) {
+          result.push(token("V", THAI_VOWEL_AFTER[char]));
+          i++;
+          continue;
+        }
+
+        result.push(token("P", char));
+        i++;
       }
-      if(!th)out=out.replace(/ဉ္ဉ/g,'ည').replace(/သ္သ/g,'ဿ');
-      return out;
-    }
-    function normRoman(s){return s.normalize('NFC').replace(/ṁ/g,'ṃ').replace(/Ṁ/g,'Ṃ');}
-    const RUN_RE=/([\u0E00-\u0E7F]+)|([\u1000-\u109F]+)|([^\u0E00-\u0E7F\u1000-\u109F]+)/g;
-    function convertPali(text,dst){
-      const runs=text.match(RUN_RE)||[];let out='';
-      for(const run of runs){
-        const f=run.codePointAt(0);
-        const sc=(f>=0x0E00&&f<=0x0E7F)?'thai':(f>=0x1000&&f<=0x109F)?'burmese':'roman';
-        if(sc===dst){out+=run;continue;}
-        let rom=sc==='thai'?composeRoman(thaiItems(run)):sc==='burmese'?composeRoman(burmeseItems(run)):normRoman(run);
-        out+=dst==='roman'?rom:renderRoman(rom.toLowerCase(),dst);
+
+      if (pendingPreVowel) {
+        result.push(token("P", pendingPreVowel === "e" ? "เ" : "โ"));
       }
-      return out;
+
+      return result;
     }
 
-    function convertText(destination) {
-      const input = document.getElementById('inputText').value;
-      if (!input.trim()) { showToast('กรุณากรอกข้อความก่อนแปลงภาษา'); return; }
-      const result = convertPali(input.normalize('NFC'), destination);
-      document.getElementById('outputText').value = result;
-      const names = { thai: 'ไทย', roman: 'Roman (IAST)', burmese: 'မြန်မာ' };
-      const found = [];
-      if (/[\u0E00-\u0E7F]/.test(input)) found.push(names.thai);
-      if (/[\u1000-\u109F]/.test(input)) found.push(names.burmese);
-      if (/[A-Za-zāīūṅñṭḍṇḷṃṁ]/i.test(input)) found.push(names.roman);
-      document.getElementById('detectedScript').textContent = `จาก: ${found.join(' + ')} → เป็น: ${names[destination]}`;
-    }
-    function updateCharCount() {
-      document.getElementById('inputCharCount').textContent = `${document.getElementById('inputText').value.length} ตัวอักษร`;
-    }
-    function setSample(value) {
-      document.getElementById('inputText').value = value;
-      updateCharCount();
-      showToast('โหลดตัวอย่างข้อความแล้ว');
-    }
-    async function copyText() {
-      const output = document.getElementById('outputText');
-      if (!output.value) { showToast('ไม่มีข้อความให้คัดลอก'); return; }
-      try {
-        if (navigator.clipboard && window.isSecureContext) await navigator.clipboard.writeText(output.value);
-        else { output.select(); document.execCommand('copy'); }
-        showToast('คัดลอกเรียบร้อยแล้ว');
-      } catch {
-        output.select();
-        document.execCommand('copy');
-        showToast('คัดลอกเรียบร้อยแล้ว');
+    function parseMyanmar(run) {
+      const result = [];
+      let i = 0;
+
+      while (i < run.length) {
+        const char = run[i];
+
+        if (char === "အ") {
+          i++;
+
+          let vowel = "a";
+          if (MYANMAR_VOWEL_SIGNS[run[i]]) {
+            vowel = MYANMAR_VOWEL_SIGNS[run[i]];
+            i++;
+
+            if (vowel === "e" && (run[i] === "ာ" || run[i] === "ါ")) {
+              vowel = "o";
+              i++;
+            }
+          }
+
+          result.push(token("V", vowel));
+
+          if (run[i] === MYANMAR_NIGGAHITA) {
+            result.push(token("M", "ṃ"));
+            i++;
+          }
+
+          continue;
+        }
+
+        if (MYANMAR_CONSONANTS[char]) {
+          const roman = MYANMAR_CONSONANTS[char];
+
+          if (roman === "ññ") {
+            result.push(token("C", "ñ"));
+            result.push(token("C", "ñ"));
+          } else {
+            result.push(token("C", roman));
+          }
+
+          i++;
+
+          if (run[i] === MYANMAR_VIRAMA || run[i] === "်") {
+            i++;
+            continue;
+          }
+
+          let vowel = "a";
+
+          if (MYANMAR_VOWEL_SIGNS[run[i]]) {
+            vowel = MYANMAR_VOWEL_SIGNS[run[i]];
+            i++;
+
+            if (vowel === "e" && (run[i] === "ာ" || run[i] === "ါ")) {
+              vowel = "o";
+              i++;
+            }
+          }
+
+          result.push(token("V", vowel));
+
+          if (run[i] === MYANMAR_NIGGAHITA) {
+            result.push(token("M", "ṃ"));
+            i++;
+          }
+
+          continue;
+        }
+
+        if (char === MYANMAR_NIGGAHITA) {
+          result.push(token("M", "ṃ"));
+          i++;
+          continue;
+        }
+
+        result.push(token("P", char));
+        i++;
       }
-    }
-    function resetText() {
-      document.getElementById('inputText').value = '';
-      document.getElementById('outputText').value = '';
-      document.getElementById('detectedScript').textContent = 'รอการแปลง';
-      updateCharCount();
-      showToast('ล้างข้อความเรียบร้อย');
-    }
-    let toastTimer;
-    function showToast(message) {
-      const toast = document.getElementById('toast');
-      toast.textContent = message;
-      toast.classList.add('visible');
-      clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => toast.classList.remove('visible'), 2200);
-    }
-    function speakText() {
-      const text = document.getElementById('outputText').value || document.getElementById('inputText').value;
-      if (!text) { showToast('ไม่มีข้อความสำหรับอ่านเสียง'); return; }
-      if (!('speechSynthesis' in window)) { showToast('เบราว์เซอร์ไม่รองรับการอ่านเสียง'); return; }
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 0.85;
-      window.speechSynthesis.speak(utterance);
-      showToast('กำลังเล่นเสียงอ่าน');
+
+      return result;
     }
 
-    const themeToggle = document.getElementById('themeToggle');
-    try {
-      if (localStorage.getItem('pali_theme') === 'dark' || (!localStorage.getItem('pali_theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) document.documentElement.classList.add('dark');
-    } catch {}
-    themeToggle.addEventListener('click', () => {
-      document.documentElement.classList.toggle('dark');
-      try { localStorage.setItem('pali_theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light'); } catch {}
-    });
+    function parseRoman(run) {
+      const result = [];
+      const text = normalizeRoman(run);
+      let i = 0;
 
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').catch(error => console.error('Service Worker registration failed:', error));
+      while (i < text.length) {
+        const rest = text.slice(i);
+        const consonant = ROMAN_CONSONANTS.find(item => rest.startsWith(item));
+        const vowel = ROMAN_VOWELS.find(item => rest.startsWith(item));
+
+        if (consonant) {
+          result.push(token("C", consonant));
+          i += consonant.length;
+          continue;
+        }
+
+        if (vowel) {
+          result.push(token("V", vowel));
+          i += vowel.length;
+          continue;
+        }
+
+        if (rest.startsWith("ṃ")) {
+          result.push(token("M", "ṃ"));
+          i++;
+          continue;
+        }
+
+        result.push(token("P", text[i]));
+        i++;
+      }
+
+      return result;
+    }
+
+    function parseByScript(run, script) {
+      if (script === "thai") return parseThai(run);
+      if (script === "myanmar") return parseMyanmar(run);
+      if (script === "roman") return parseRoman(run);
+      return [...run].map(char => token("P", char));
+    }
+
+    function splitIntoRuns(text) {
+      const runs = [];
+      let currentScript = null;
+      let currentText = "";
+
+      function pushRun() {
+        if (currentText) {
+          runs.push({ script: currentScript, text: currentText });
+        }
+        currentScript = null;
+        currentText = "";
+      }
+
+      for (const char of text.normalize("NFC")) {
+        const script = getScriptOfChar(char);
+
+        if (script === "other") {
+          pushRun();
+          runs.push({ script: "other", text: char });
+          continue;
+        }
+
+        if (script !== currentScript) {
+          pushRun();
+          currentScript = script;
+        }
+
+        currentText += char;
+      }
+
+      pushRun();
+      return runs;
+    }
+
+    function toTokens(text) {
+      return splitIntoRuns(text).flatMap(run => {
+        if (run.script === "other") {
+          return [...run.text].map(char => token("P", char));
+        }
+        return parseByScript(run.text, run.script);
       });
     }
 
-    let deferredPrompt;
-    const installButton = document.getElementById('installPwaBtn');
-    window.addEventListener('beforeinstallprompt', event => {
-      event.preventDefault();
-      deferredPrompt = event;
-      installButton.hidden = false;
-    });
-    installButton.addEventListener('click', async () => {
-      if (!deferredPrompt) return;
-      deferredPrompt.prompt();
-      await deferredPrompt.userChoice;
-      installButton.hidden = true;
-      deferredPrompt = null;
-    });
-    window.addEventListener('appinstalled', () => { installButton.hidden = true; });
-
-    function updateOnlineStatus() {
-      const badge = document.getElementById('statusBadge');
-      badge.textContent = navigator.onLine ? 'พร้อมใช้งานออฟไลน์' : 'กำลังใช้งานออฟไลน์';
-      badge.classList.toggle('offline', !navigator.onLine);
+    function renderRoman(tokens) {
+      return tokens.map(item => item.value).join("").normalize("NFC");
     }
-    window.addEventListener('online', updateOnlineStatus);
-    window.addEventListener('offline', updateOnlineStatus);
-    updateOnlineStatus();
+
+    function renderThai(tokens) {
+      let output = "";
+
+      for (let i = 0; i < tokens.length; i++) {
+        const item = tokens[i];
+        const next = tokens[i + 1];
+
+        if (item.type === "C") {
+          const consonant = ROMAN_TO_THAI[item.value] || item.value;
+          output += consonant;
+
+          if (next && next.type === "C") {
+            output += THAI_VIRAMA;
+          }
+
+          continue;
+        }
+
+        if (item.type === "V") {
+          const previous = tokens[i - 1];
+          const hasConsonantBefore = previous && previous.type === "C";
+
+          if (!hasConsonantBefore) {
+            if (item.value === "a") output += "อ";
+            if (item.value === "ā") output += "อา";
+            if (item.value === "i") output += "อิ";
+            if (item.value === "ī") output += "อี";
+            if (item.value === "u") output += "อุ";
+            if (item.value === "ū") output += "อู";
+            if (item.value === "e") output += "เอ";
+            if (item.value === "o") output += "โอ";
+            continue;
+          }
+
+          if (item.value === "a") continue;
+          if (item.value === "ā") output += "า";
+          if (item.value === "i") output += "ิ";
+          if (item.value === "ī") output += "ี";
+          if (item.value === "u") output += "ุ";
+          if (item.value === "ū") output += "ู";
+          if (item.value === "e") {
+            const lastConsonantIndex = output.lastIndexOf(ROMAN_TO_THAI[previous.value] || previous.value);
+            if (lastConsonantIndex >= 0) {
+              output = output.slice(0, lastConsonantIndex) + "เ" + output.slice(lastConsonantIndex);
+            } else {
+              output += "เ";
+            }
+          }
+          if (item.value === "o") {
+            const lastConsonantIndex = output.lastIndexOf(ROMAN_TO_THAI[previous.value] || previous.value);
+            if (lastConsonantIndex >= 0) {
+              output = output.slice(0, lastConsonantIndex) + "โ" + output.slice(lastConsonantIndex);
+            } else {
+              output += "โ";
+            }
+          }
+
+          continue;
+        }
+
+        if (item.type === "M") {
+          output += THAI_NIGGAHITA;
+          continue;
+        }
+
+        output += item.value;
+      }
+
+      return output.normalize("NFC");
+    }
+
+    function renderMyanmar(tokens) {
+      let output = "";
+
+      for (let i = 0; i < tokens.length; i++) {
+        const item = tokens[i];
+        const next = tokens[i + 1];
+
+        if (item.type === "C") {
+          const consonant = ROMAN_TO_MYANMAR[item.value] || item.value;
+          output += consonant;
+
+          if (next && next.type === "C") {
+            output += MYANMAR_VIRAMA;
+          }
+
+          continue;
+        }
+
+        if (item.type === "V") {
+          const previous = tokens[i - 1];
+          const hasConsonantBefore = previous && previous.type === "C";
+
+          if (!hasConsonantBefore) {
+            if (item.value === "a") output += "အ";
+            if (item.value === "ā") output += "အာ";
+            if (item.value === "i") output += "ဣ";
+            if (item.value === "ī") output += "ဤ";
+            if (item.value === "u") output += "ဥ";
+            if (item.value === "ū") output += "ဦ";
+            if (item.value === "e") output += "ဧ";
+            if (item.value === "o") output += "ဩ";
+            continue;
+          }
+
+          if (item.value === "a") continue;
+          if (item.value === "ā") output += "ာ";
+          if (item.value === "i") output += "ိ";
+          if (item.value === "ī") output += "ီ";
+          if (item.value === "u") output += "ု";
+          if (item.value === "ū") output += "ူ";
+          if (item.value === "e") output += "ေ";
+          if (item.value === "o") output += "ော";
+
+          continue;
+        }
+
+        if (item.type === "M") {
+          output += MYANMAR_NIGGAHITA;
+          continue;
+        }
+
+        output += item.value;
+      }
+
+      return output.normalize("NFC");
+    }
+
+    function convertPali(text, destination) {
+      const tokens = toTokens(text);
+
+      if (destination === "thai") return renderThai(tokens);
+      if (destination === "roman") return renderRoman(tokens);
+      if (destination === "myanmar") return renderMyanmar(tokens);
+
+      return text;
+    }
+
+    function validateInput(text) {
+      const unsupported = new Set();
+
+      for (const char of text) {
+        const script = getScriptOfChar(char);
+
+        if (script === "thai") {
+          const allowed =
+            THAI_CONSONANTS[char] ||
+            THAI_VOWEL_AFTER[char] ||
+            THAI_VOWEL_BEFORE[char] ||
+            char === THAI_VIRAMA ||
+            char === THAI_NIGGAHITA;
+
+          if (!allowed && /[\u0E00-\u0E7F]/u.test(char)) unsupported.add(char);
+        }
+
+        if (script === "myanmar") {
+          const allowed =
+            MYANMAR_CONSONANTS[char] ||
+            MYANMAR_VOWEL_SIGNS[char] ||
+            char === "အ" ||
+            char === MYANMAR_VIRAMA ||
+            char === "်" ||
+            char === MYANMAR_NIGGAHITA;
+
+          if (!allowed && /[\u1000-\u109F]/u.test(char)) unsupported.add(char);
+        }
+      }
+
+      return [...unsupported];
+    }
+
+    function updateInterface() {
+      const text = inputText.value;
+      const detected = detectScript(text);
+      const labels = {
+        thai: "บาลีอักษรไทย",
+        roman: "Roman IAST",
+        myanmar: "บาลีพม่า",
+        none: "ยังไม่มีข้อความ"
+      };
+
+      let detectedText = `ตรวจพบอินพุต: ${labels[detected.main] || "ข้อความผสม"}`;
+
+      if (detected.mixed) {
+        detectedText += " (มีหลายระบบอักษร)";
+      }
+
+      detectedScript.textContent = detectedText;
+      inputCount.textContent = `${[...text].length} ตัวอักษร`;
+      outputCount.textContent = `${[...outputText.value].length} ตัวอักษร`;
+
+      const unsupported = validateInput(text);
+
+      if (!text.trim()) {
+        validationMessage.textContent = "ยังไม่มีข้อความให้ตรวจสอบ";
+        validationMessage.className = "hint";
+      } else if (unsupported.length) {
+        validationMessage.textContent =
+          `พบอักขระไทย/พม่าที่ยังไม่อยู่ในกฎบาลีของระบบ: ${unsupported.join(" ")}`;
+        validationMessage.className = "warning";
+      } else {
+        validationMessage.textContent =
+          "ไม่พบอักขระไทยหรือพม่านอกกฎการแปลงพื้นฐาน";
+        validationMessage.className = "hint";
+      }
+    }
+
+    function performConversion(destination = targetScript.value) {
+      targetScript.value = destination;
+      outputText.value = convertPali(inputText.value, destination);
+      localStorage.setItem("paliConverterInput", inputText.value);
+      localStorage.setItem("paliConverterTarget", destination);
+      updateInterface();
+    }
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add("show");
+
+      window.clearTimeout(showToast.timer);
+      showToast.timer = window.setTimeout(() => {
+        toast.classList.remove("show");
+      }, 2200);
+    }
+
+    async function copyOutput() {
+      if (!outputText.value) {
+        showToast("ยังไม่มีผลลัพธ์ให้คัดลอก");
+        return;
+      }
+
+      try {
+        await navigator.clipboard.writeText(outputText.value);
+        showToast("คัดลอกผลลัพธ์แล้ว");
+      } catch {
+        outputText.select();
+        document.execCommand("copy");
+        showToast("คัดลอกผลลัพธ์แล้ว");
+      }
+    }
+
+    function speakRoman() {
+      const roman = convertPali(inputText.value, "roman");
+
+      if (!roman.trim()) {
+        showToast("ยังไม่มีข้อความให้อ่าน");
+        return;
+      }
+
+      if (!("speechSynthesis" in window)) {
+        showToast("เบราว์เซอร์นี้ไม่รองรับการอ่านออกเสียง");
+        return;
+      }
+
+      window.speechSynthesis.cancel();
+
+      const utterance = new SpeechSynthesisUtterance(roman);
+      utterance.lang = "en-US";
+      utterance.rate = 0.78;
+      utterance.pitch = 1;
+      window.speechSynthesis.speak(utterance);
+      showToast("กำลังอ่าน Roman IAST");
+    }
+
+    function downloadText() {
+      const text = outputText.value;
+
+      if (!text) {
+        showToast("ยังไม่มีผลลัพธ์ให้ดาวน์โหลด");
+        return;
+      }
+
+      const targetName = {
+        thai: "thai-pali",
+        roman: "roman-iast",
+        myanmar: "myanmar-pali"
+      }[targetScript.value];
+
+      const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+
+      anchor.href = url;
+      anchor.download = `pali-${targetName}.txt`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+
+      showToast("ดาวน์โหลดไฟล์ข้อความแล้ว");
+    }
+
+    function swapText() {
+      if (!outputText.value) {
+        showToast("กรุณาแปลงข้อความก่อนจึงจะสลับได้");
+        return;
+      }
+
+      const oldInput = inputText.value;
+      inputText.value = outputText.value;
+      outputText.value = oldInput;
+      updateInterface();
+      showToast("สลับข้อความแล้ว");
+    }
+
+    function clearAll() {
+      inputText.value = "";
+      outputText.value = "";
+      localStorage.removeItem("paliConverterInput");
+      updateInterface();
+      inputText.focus();
+      showToast("ล้างข้อความแล้ว");
+    }
+
+    document.querySelectorAll("[data-target]").forEach(button => {
+      button.addEventListener("click", () => performConversion(button.dataset.target));
+    });
+
+    document.querySelectorAll("[data-sample]").forEach(button => {
+      button.addEventListener("click", () => {
+        inputText.value = button.dataset.sample;
+        performConversion(targetScript.value);
+      });
+    });
+
+    inputText.addEventListener("input", () => {
+      updateInterface();
+      localStorage.setItem("paliConverterInput", inputText.value);
+    });
+
+    targetScript.addEventListener("change", () => performConversion());
+
+    document.getElementById("copyButton").addEventListener("click", copyOutput);
+    document.getElementById("speakButton").addEventListener("click", speakRoman);
+    document.getElementById("downloadButton").addEventListener("click", downloadText);
+    document.getElementById("swapButton").addEventListener("click", swapText);
+    document.getElementById("clearButton").addEventListener("click", clearAll);
+
+    document.getElementById("themeToggle").addEventListener("click", () => {
+      const root = document.documentElement;
+      const isDark = root.dataset.theme === "dark";
+
+      root.dataset.theme = isDark ? "light" : "dark";
+      localStorage.setItem("paliConverterTheme", isDark ? "light" : "dark");
+      document.getElementById("themeToggle").textContent =
+        isDark ? "โหมดมืด" : "โหมดสว่าง";
+    });
+
+    function initialize() {
+      const savedTheme = localStorage.getItem("paliConverterTheme") || "light";
+      const savedInput = localStorage.getItem("paliConverterInput") || "";
+      const savedTarget = localStorage.getItem("paliConverterTarget") || "myanmar";
+
+      document.documentElement.dataset.theme = savedTheme;
+      document.getElementById("themeToggle").textContent =
+        savedTheme === "dark" ? "โหมดสว่าง" : "โหมดมืด";
+
+      inputText.value = savedInput;
+      targetScript.value = savedTarget;
+
+      if (savedInput) {
+        performConversion(savedTarget);
+      } else {
+        updateInterface();
+      }
+    }
+
+    initialize();
   </script>
 </body>
 </html>
