@@ -1,21 +1,23 @@
 {
-  "name": "Offline Pali Converter",
-  "short_name": "PaliConverter",
-  "description": "แปลงอักษรบาลี ไทย ↔ Roman (IAST) ↔ မြန်မာ แบบออฟไลน์",
-  "start_url": "/",
-  "scope": "/",
+  "name": "Pali Transcript",
+  "short_name": "Pali",
+  "description": "เครื่องมือแปลงอักษรบาลี ไทย Roman และพม่า",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#f7f9fc",
-  "theme_color": "#2c3e50",
+  "orientation": "portrait-primary",
+  "background_color": "#ffffff",
+  "theme_color": "#0f766e",
+  "lang": "th",
   "icons": [
     {
-      "src": "/icon-192.png",
+      "src": "./icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "/icon-512.png",
+      "src": "./icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
